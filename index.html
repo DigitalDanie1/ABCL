@@ -1,0 +1,710 @@
+<title>ABCL × IOVA Research</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap">
+<style>
+/* Layout: SaaS research console. Fixed left sidebar + dense card grid; small headers, thin segment bars, ranked lists, green/red deltas. ABCL teal, IOVA orange. */
+:root{
+  --bg:#f6f6f7; --panel:#ffffff; --side:#fbfbfb; --line:#e6e6e9; --line2:#f1f1f3;
+  --fg:#17171b; --fg2:#53545c; --muted:#8b8c94; --chip:#f2f2f4;
+  --abcl:#0f9f8e; --iova:#e5780b; --up:#15a34a; --down:#dc2626; --warn:#c77700; --blue:#3866e0; --violet:#7c5cd6;
+  --tip-bg:#17171b; --tip-fg:#ffffff;
+  --f:'Geist','Noto Sans KR',system-ui,-apple-system,sans-serif;
+  --fm:'Geist Mono',ui-monospace,Menlo,monospace;
+  color-scheme:light;
+}
+@media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
+  --bg:#0e0f11; --panel:#16171a; --side:#121315; --line:#26272c; --line2:#1d1e22;
+  --fg:#ececef; --fg2:#a8a9b1; --muted:#73747c; --chip:#212226;
+  --abcl:#2cc5b1; --iova:#ff9a3a; --up:#2fd06b; --down:#ff6b6b; --warn:#f2b33d; --blue:#7ea0ff; --violet:#a68cff;
+  --tip-bg:#ececef; --tip-fg:#16171a;
+  color-scheme:dark;}}
+:root[data-theme="dark"]{
+  --bg:#0e0f11; --panel:#16171a; --side:#121315; --line:#26272c; --line2:#1d1e22;
+  --fg:#ececef; --fg2:#a8a9b1; --muted:#73747c; --chip:#212226;
+  --abcl:#2cc5b1; --iova:#ff9a3a; --up:#2fd06b; --down:#ff6b6b; --warn:#f2b33d; --blue:#7ea0ff; --violet:#a68cff;
+  --tip-bg:#ececef; --tip-fg:#16171a;
+  color-scheme:dark;}
+*{box-sizing:border-box}
+html,body{height:100%}
+body{margin:0;background:var(--bg);color:var(--fg);font:400 13px/1.55 var(--f);padding-inline:0;padding-block:0}
+a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
+.mono,.n{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.app{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100%}
+.side{background:var(--side);border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
+.logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;padding:2px 8px;white-space:nowrap;flex:none}
+.logo i{width:18px;height:18px;border-radius:5px;background:linear-gradient(135deg,var(--abcl),var(--iova));display:block}
+.nav{display:grid;gap:2px}
+.nav button{all:unset;display:flex;align-items:center;gap:9px;padding:7px 10px;border-radius:8px;color:var(--fg2);cursor:pointer;font-size:13px}
+.nav button:hover{background:var(--chip);color:var(--fg)}
+.nav button[aria-current="page"]{background:var(--chip);color:var(--fg);font-weight:600}
+.nav button:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
+.nav svg{width:15px;height:15px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7}
+.sgroup{font-size:11px;color:var(--muted);padding:0 10px;margin-bottom:4px;display:flex;justify-content:space-between}
+.tk{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:8px;font-size:12.5px}
+.tk b{display:flex;align-items:center;gap:7px}
+.tk b::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+.side .foot{margin-top:auto;font-size:11px;color:var(--muted);padding:0 10px}
+.main{min-width:0;padding:18px 24px 40px}
+.top{display:flex;align-items:center;gap:12px;flex-wrap:wrap;margin-bottom:16px}
+.top h1{font-size:18px;font-weight:700;margin:0;letter-spacing:-.01em}
+.asof{font-size:12px;color:var(--muted)}
+.top .sp{flex:1}
+.pillset{display:flex;gap:6px;flex-wrap:wrap}
+.pillset span{font-size:11.5px;padding:3px 9px;border-radius:99px;background:var(--chip);color:var(--fg2)}
+.grid{display:grid;gap:12px}
+.g4{grid-template-columns:repeat(4,minmax(0,1fr))}
+.g3{grid-template-columns:repeat(3,minmax(0,1fr))}
+.g2{grid-template-columns:repeat(2,minmax(0,1fr))}
+.s2{grid-column:span 2} .s3{grid-column:span 3}
+@media(max-width:1180px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.s3{grid-column:1/-1}}
+@media(max-width:700px){.g4,.g3,.g2{grid-template-columns:minmax(0,1fr)}.s2,.s3{grid-column:auto}}
+.card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:10px}
+.ch{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ch h3{font-size:13px;font-weight:600;margin:0}
+.ch .more{font-size:11.5px;color:var(--muted);white-space:nowrap}
+section[hidden]{display:none}
+.kpi{display:grid;gap:2px;min-width:0}
+.kpi .l{font-size:11.5px;color:var(--muted)}
+.kpi .v{font:500 20px/1.2 var(--fm);letter-spacing:-.01em}
+.kpi .d{font-size:11.5px;color:var(--fg2)}
+.kgrid{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:14px 18px}
+@media(max-width:560px){.kgrid{grid-template-columns:repeat(2,minmax(0,1fr))}}
+.tag{display:inline-flex;align-items:center;gap:6px;font-weight:600;font-size:13px}
+.tag::before{content:"";width:8px;height:8px;border-radius:50%;background:var(--c)}
+.up{color:var(--up)} .down{color:var(--down)}
+.delta{font:500 11px var(--fm);padding:1px 6px;border-radius:5px;background:var(--chip);white-space:nowrap}
+.delta.up{background:color-mix(in srgb,var(--up) 12%,transparent)}
+.delta.down{background:color-mix(in srgb,var(--down) 12%,transparent)}
+.rl{list-style:none;margin:0;padding:0;display:grid}
+.rl li{display:grid;grid-template-columns:18px minmax(0,1fr) auto;gap:8px;padding:7px 0;border-top:1px solid var(--line2);align-items:start}
+.rl li:first-child{border-top:0}
+.rl .i{color:var(--muted);font:500 11.5px var(--fm);padding-top:1px}
+.rl .x small{display:block;color:var(--muted);font-size:11.5px;margin-top:1px}
+.rl .r{font:500 12px var(--fm);text-align:right;white-space:nowrap}
+.segrow{display:grid;grid-template-columns:minmax(0,1fr) auto auto;gap:10px;align-items:center;font-size:12.5px;padding:3px 0}
+.segrow .dot{display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c);margin-right:7px}
+.seg{display:flex;height:6px;border-radius:99px;overflow:hidden;gap:2px;background:var(--line2)}
+.seg i{display:block;height:100%;background:var(--c)}
+.hb{display:grid;gap:8px}
+.hbr{display:grid;grid-template-columns:120px minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:12px}
+.hbr .lb{color:var(--fg2)}
+.hbr .tr{height:8px;background:var(--line2);border-radius:99px;position:relative}
+.hbr .tr i{position:absolute;top:0;bottom:0;left:0;border-radius:99px;background:var(--c)}
+.hbr .vv{font:500 12px var(--fm);text-align:right}
+@media(max-width:520px){.hbr{grid-template-columns:90px minmax(0,1fr) 56px}}
+.vbars{display:flex;align-items:flex-end;gap:14px;height:150px;padding-top:16px;border-bottom:1px solid var(--line)}
+.vb{flex:1;display:flex;flex-direction:column;align-items:center;justify-content:flex-end;height:100%;gap:4px;min-width:0}
+.vb i{display:block;width:100%;max-width:44px;border-radius:6px 6px 2px 2px;background:var(--c)}
+.vb i.est{background:repeating-linear-gradient(135deg,var(--c) 0 4px,transparent 4px 7px);border:1px solid var(--c)}
+.vb span{font:500 11.5px var(--fm)}
+.vlab{display:flex;gap:14px}.vlab span{flex:1;text-align:center;font-size:11px;color:var(--muted)}
+.wf{display:grid;gap:6px}
+.wfr{display:grid;grid-template-columns:150px minmax(0,1fr) 70px;gap:10px;align-items:center;font-size:12px}
+.wfr .tr{height:14px;position:relative}
+.wfr .tr i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--c)}
+.wfr .vv{font:500 12px var(--fm);text-align:right}
+@media(max-width:520px){.wfr{grid-template-columns:110px minmax(0,1fr) 60px}}
+.tw{overflow-x:auto;margin:0 -16px;padding:0 16px}
+table{border-collapse:collapse;width:100%;font-size:12.5px;min-width:520px}
+th{font-weight:500;color:var(--muted);text-align:left;padding:6px 8px;border-bottom:1px solid var(--line);font-size:11.5px;white-space:nowrap}
+td{padding:7px 8px;border-bottom:1px solid var(--line2);vertical-align:top}
+tr:last-child td{border-bottom:0}
+td.n,th.n{text-align:right}
+.b{display:inline-block;font-size:10.5px;font-weight:600;padding:1px 6px;border-radius:5px;background:var(--chip);color:var(--fg2);white-space:nowrap}
+.b.ok{color:var(--up);background:color-mix(in srgb,var(--up) 12%,transparent)}
+.b.rep{color:var(--blue);background:color-mix(in srgb,var(--blue) 12%,transparent)}
+.b.est{color:var(--violet);background:color-mix(in srgb,var(--violet) 12%,transparent)}
+.b.mem{color:var(--muted)}
+.b.unk{color:var(--down);background:color-mix(in srgb,var(--down) 10%,transparent)}
+.b.clm{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.b.hi{color:var(--down);background:color-mix(in srgb,var(--down) 10%,transparent)}
+.b.md{color:var(--warn);background:color-mix(in srgb,var(--warn) 12%,transparent)}
+.note{font-size:11.5px;color:var(--muted);margin:0}
+p{margin:0}
+.body{color:var(--fg2);font-size:12.5px}
+.t{border-bottom:1px dotted var(--muted);cursor:help;position:relative;outline:none}
+.t:hover::after,.t:focus::after{content:attr(data-tip);position:absolute;left:0;top:calc(100% + 4px);z-index:30;width:max-content;max-width:240px;background:var(--tip-bg);color:var(--tip-fg);font:400 11.5px/1.45 var(--f);padding:6px 9px;border-radius:7px;white-space:normal;box-shadow:0 6px 18px rgba(0,0,0,.18)}
+.donut{width:120px;height:120px;border-radius:50%;flex:none;position:relative}
+.donut::after{content:"";position:absolute;inset:26px;border-radius:50%;background:var(--panel)}
+.dwrap{display:flex;gap:18px;align-items:center;flex-wrap:wrap}
+.rm{display:grid;grid-template-columns:28px repeat(3,minmax(0,1fr));grid-template-rows:repeat(3,minmax(92px,auto)) 24px;gap:4px}
+.rm .cell{border-radius:8px;padding:6px;display:flex;flex-wrap:wrap;gap:4px;align-content:flex-start;min-width:0}
+.rm .ax{font-size:10.5px;color:var(--muted);display:flex;align-items:center;justify-content:center}
+.rm .ax.y{writing-mode:vertical-rl;transform:rotate(180deg)}
+.rc{font-size:11px;padding:2px 7px;border-radius:99px;background:var(--panel);border:1px solid var(--line);display:inline-flex;gap:5px;align-items:center}
+.rc::before{content:"";width:6px;height:6px;border-radius:50%;background:var(--c);flex:none}
+.ctl{display:grid;grid-template-columns:140px minmax(0,1fr) 70px;gap:10px;align-items:center;font-size:12px}
+.ctl output{font:500 12px var(--fm);text-align:right}
+input[type=range]{width:100%;accent-color:var(--c,var(--fg))}
+.out{display:grid;grid-template-columns:repeat(auto-fit,minmax(110px,1fr));gap:8px}
+.out div{background:var(--chip);border-radius:8px;padding:8px 10px}
+.out small{display:block;font-size:11px;color:var(--muted)}
+.out b{font:500 16px var(--fm)}
+.btns{display:flex;gap:6px;flex-wrap:wrap}
+.btns button{all:unset;font-size:11.5px;padding:3px 9px;border-radius:6px;border:1px solid var(--line);color:var(--fg2);cursor:pointer;background:var(--panel)}
+.btns button:hover{color:var(--fg);border-color:var(--fg2)}
+.btns button:focus-visible{outline:2px solid var(--blue)}
+@media(max-width:520px){.ctl{grid-template-columns:1fr 64px}.ctl label{grid-column:1/-1}}
+.tl{display:grid}
+.tli{display:grid;grid-template-columns:96px 18px minmax(0,1fr) auto;gap:10px;padding:9px 0;border-top:1px solid var(--line2);align-items:start}
+.tli:first-child{border-top:0}
+.tli .dt{font:500 11.5px var(--fm);color:var(--fg2)}
+.tli .pin{width:9px;height:9px;border-radius:50%;background:var(--c);margin-top:4px}
+.tli b{font-weight:600}
+.tli small{display:block;color:var(--muted);font-size:11.5px}
+@media(max-width:560px){.tli{grid-template-columns:80px 14px minmax(0,1fr)}.tli>:last-child{grid-column:3}}
+.quote{border-left:2px solid var(--c);padding:2px 0 2px 10px;color:var(--fg2);font-size:12.5px}
+.quote small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
+.flt{display:flex;gap:6px;flex-wrap:wrap}
+.flt button{all:unset;font-size:12px;padding:4px 11px;border-radius:99px;background:var(--chip);color:var(--fg2);cursor:pointer}
+.flt button[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
+.flt button:focus-visible{outline:2px solid var(--blue)}
+@media(max-width:860px){
+  .app{grid-template-columns:minmax(0,1fr)}
+  .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;flex-direction:row;align-items:center;padding:8px 16px;z-index:20;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto;gap:10px;scrollbar-width:none}
+  .side::-webkit-scrollbar{display:none}
+  .side .grp,.side .foot{display:none}
+  .nav{display:flex;gap:2px}
+  .nav button{white-space:nowrap;padding:6px 9px}
+  .nav svg{display:none}
+  .main{padding:14px 16px 32px}
+}
+</style>
+
+<div class="app">
+<aside class="side">
+  <div class="logo"><i></i>Biotech Desk</div>
+  <nav class="nav" id="nav"></nav>
+  <div class="grp">
+    <div class="sgroup"><span>워치리스트</span><span>9/30 종가</span></div>
+    <div class="tk" style="--c:var(--abcl)"><b>ABCL</b><span class="n">$14.59</span></div>
+    <div class="tk" style="--c:var(--iova)"><b>IOVA</b><span class="n">$14.82</span></div>
+  </div>
+  <div class="foot">KoreanDaniel · 투자 조언 아님<br>점선 밑줄 용어에 마우스를 올리면 설명</div>
+</aside>
+
+<main class="main">
+  <div class="top">
+    <h1>ABCL × IOVA 리서치</h1>
+    <span class="asof">2026-09-30 종가 · 2Q26 10-Q · 2026-10-01 작성</span>
+    <span class="sp"></span>
+    <div class="pillset"><span><b class="b ok">확인</b> 공시·IR</span><span><b class="b rep">보도</b> 언론·집계</span><span><b class="b est">추정</b> 제 계산</span><span><b class="b clm">주장</b> 제3자</span><span><b class="b mem">기억</b> 재확인 필요</span></div>
+  </div>
+  <div id="views"></div>
+</main>
+</div>
+
+<script>
+(function(){
+const $=s=>document.querySelector(s);
+const T=(word,tip)=>`<span class="t" tabindex="0" data-tip="${tip}">${word}</span>`;
+const B=k=>({ok:'<b class="b ok">확인</b>',rep:'<b class="b rep">보도</b>',est:'<b class="b est">추정</b>',clm:'<b class="b clm">주장</b>',mem:'<b class="b mem">기억</b>',unk:'<b class="b unk">미확인</b>'})[k]||'';
+const card=(title,more,body,cls='')=>`<div class="card ${cls}"><div class="ch"><h3>${title}</h3>${more?`<span class="more">${more}</span>`:''}</div>${body}</div>`;
+const kpi=(l,v,d)=>`<div class="kpi"><span class="l">${l}</span><span class="v">${v}</span>${d?`<span class="d">${d}</span>`:''}</div>`;
+const fmtB=v=>Math.abs(v)>=1000?(v<0?'-':'')+'$'+(Math.abs(v)/1000).toFixed(2)+'B':(v<0?'-':'')+'$'+Math.round(Math.abs(v))+'M';
+
+const G={
+ EV:T('EV','기업가치. 시가총액에서 순현금을 뺀 값. 현금 빼고 사업 자체가 얼마로 평가받는지'),
+ FD:T('완전희석','스톡옵션·RSU·워런트가 모두 주식이 됐다고 가정한 주식 수'),
+ RW:T('런웨이','지금 현금으로 추가 조달 없이 버틸 수 있는 기간'),
+ ATM:T('ATM','At-the-market. 회사가 시장가로 조금씩 신주를 파는 방식의 증자'),
+ PFW:T('사전납입 워런트','거의 0원에 주식으로 바꿀 수 있는 권리. 사실상 주식이라 주식 수에 포함'),
+ RNPV:T('rNPV','위험조정 순현재가치. 미래 이익을 성공 확률과 시간가치로 할인한 값'),
+ POS:T('성공 확률','3상 개시부터 승인까지 성공할 확률(PoS)'),
+ ORR:T('ORR','객관적 반응률. 종양이 의미 있게 줄어든 환자 비율'),
+ DOR:T('mDOR','반응 지속기간 중앙값. 줄어든 종양이 다시 커지기까지 걸린 기간'),
+ WAC:T('WAC','도매 공시가(정가). 실제 순가격은 이보다 낮을 수 있음'),
+ SBLA:T('sBLA','이미 승인된 약의 적응증 추가 신청'),
+ MAA:T('MAA','유럽(EMA) 판매허가 신청'),
+ EVS:T('EV/매출','기업가치가 연매출의 몇 배인지. 성장주의 대표 밸류 지표'),
+ SI:T('공매도 비율','유통주식 중 공매도된 비율. 높으면 하락 베팅이 많고, 호재 때 숏커버 급등 가능성도 큼'),
+ VMS:T('VMS','혈관운동증상. 폐경기 안면홍조·식은땀'),
+ NK3:T('NK3R','뇌의 체온 조절 회로에 있는 수용체. 막으면 안면홍조가 줄어듦'),
+ PBO:T('위약','약효 비교용 가짜약'),
+ MIDD:T('MIDD','FDA 모델 기반 개발 프로그램. 용량·시험설계를 모델링으로 FDA와 미리 협의'),
+ TCE:T('T세포 인게이저','T세포와 암세포를 동시에 붙잡아 면역세포가 암을 공격하게 하는 다중특이 항체'),
+ ATC:T('ATC','Amtagvi 투여가 승인된 치료센터'),
+ GM:T('매출총이익률','매출에서 제조원가를 뺀 비율'),
+ DTC:T('days to cover','공매도 물량을 하루 평균 거래량으로 되사는 데 걸리는 일수'),
+};
+
+const P={abcl:14.59,iova:14.82};
+const AB={sh0:306.47,offer:17.436,pfw:3.077,opt1:[21.2,1.18],opt2:[45.1,6.53],rsu:9.8,cash630:565.1,offerNet:187,vertex:28,q3burn:50,gov:110};
+AB.basic=AB.sh0+AB.offer+AB.pfw;
+AB.tsm=AB.opt1[0]+AB.opt2[0]+AB.rsu-(AB.opt1[0]*AB.opt1[1]+AB.opt2[0]*AB.opt2[1])/P.abcl;
+AB.fd=AB.basic+AB.tsm;
+AB.cash=AB.cash630+AB.offerNet+AB.vertex-AB.q3burn;
+AB.cap=AB.basic*P.abcl; AB.ev=AB.cap-AB.cash; AB.fdcap=AB.fd*P.abcl;
+const IO={sh:452.97,cash:303.7,rev26:415,h1:170.743};
+IO.cap=IO.sh*P.iova; IO.ev=IO.cap-IO.cash;
+
+const CAL=[
+ {d:'2026-10 중순',tk:'i',t:'ESMO 2026 · SARATOGA 육종 데이터',s:'등록 시험 결과, 적응증 확장 근거',imp:'md',b:'ok',soon:1},
+ {d:'2026-11 초',tk:'i',t:'3Q26 실적',s:'가이던스 유지, 마진, ATM 사용 여부',imp:'hi',b:'ok',soon:1},
+ {d:'2026-11 초',tk:'a',t:'3Q26 실적',s:'3상 일정·비용 구체화, 증자 후 현금',imp:'md',b:'est',soon:1},
+ {d:'2026 4Q',tk:'i',t:'IOV-LUN-202 업데이트',s:'NSCLC 등록 코호트, sBLA 경로',imp:'hi',b:'ok',soon:1},
+ {d:'2026 4Q',tk:'a',t:'ABCL575 1상 톱라인',s:'이후 개발 중단 예정이라 영향 작음',imp:'md',b:'ok',soon:1},
+ {d:'2026 말',tk:'i',t:'EU 판단 · ATC 110곳',s:'MAA 재제출 결과(회사 기대)',imp:'md',b:'clm',soon:0},
+ {d:'2027',tk:'a',t:'ABCL635 3상 개시',s:'약 1,500명, 약 2.5년',imp:'hi',b:'unk',soon:0},
+ {d:'2027',tk:'a',t:'종양 VMS 2상 2건 · ABCL688/386 임상',s:'유방암→전립선암, 파이프라인 확장',imp:'md',b:'clm',soon:0},
+ {d:'2027',tk:'i',t:'NSCLC sBLA 제출',s:'하반기 출시 가능',imp:'hi',b:'ok',soon:0},
+ {d:'~2030',tk:'a',t:'ABCL635 출시(성공 시)',s:'CEO 발언',imp:'hi',b:'rep',soon:0}
+];
+function tlRow(c){return `<div class="tli" style="--c:var(--${c.tk==='a'?'abcl':'iova'})"><span class="dt">${c.d}</span><span class="pin"></span><span><b>${c.tk==='a'?'ABCL':'IOVA'} · ${c.t}</b><small>${c.s}</small></span><span>${c.imp==='hi'?'<b class="b hi">영향 큼</b>':'<b class="b md">보통</b>'} ${B(c.b)}</span></div>`}
+
+const ICON={
+ home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
+ a:'<circle cx="12" cy="12" r="8"/><path d="M9 15l3-7 3 7M10 13h4"/>',
+ i:'<circle cx="12" cy="12" r="8"/><path d="M12 8v8"/>',
+ val:'<path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/>',
+ comp:'<rect x="4" y="5" width="7" height="14" rx="1"/><rect x="13" y="9" width="7" height="10" rx="1"/>',
+ cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
+ risk:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',
+ x:'<path d="M5 5l14 14M19 5L5 19"/>',
+ hist:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
+ src:'<path d="M6 4h9l3 3v13H6z"/><path d="M9 11h6M9 15h6"/>'
+};
+const V=[];
+
+/* OVERVIEW */
+V.push(['overview','개요','home',()=>`
+<div class="grid g2">
+ ${card(`<span class="tag" style="--c:var(--abcl)">ABCL · AbCellera</span>`,'항체 발굴 플랫폼 → 자체 신약',`
+  <div class="kgrid">
+   ${kpi('주가 (9/30)','$14.59','1년 +200% '+B('rep'))}
+   ${kpi('시가총액',fmtB(AB.cap),G.FD+' '+fmtB(AB.fdcap)+' '+B('est'))}
+   ${kpi(G.EV,fmtB(AB.ev),'추정 현금 '+fmtB(AB.cash)+' 차감 '+B('est'))}
+   ${kpi(G.SI,'15.4%','유통주식 기준 '+B('rep'))}
+   ${kpi('2Q 매출','$4.1M','<span class="delta down">-76% YoY</span>')}
+   ${kpi('현금+유가증권','~'+fmtB(AB.cash),'+정부지원 $110M '+B('est'))}
+   ${kpi(G.RW,'2.7–4.2년','3상 비용 가정에 따라 '+B('est'))}
+   ${kpi('컨센서스 목표가','$16.67','<span class="delta up">+14%</span> 10명 '+B('rep'))}
+  </div>`)}
+ ${card(`<span class="tag" style="--c:var(--iova)">IOVA · Iovance</span>`,'상업화 단계 세포치료',`
+  <div class="kgrid">
+   ${kpi('주가 (9/30)','$14.82','9/29 가이던스 상향 후 +31~35% '+B('rep'))}
+   ${kpi('시가총액',fmtB(IO.cap),'452.97M주 '+B('ok'))}
+   ${kpi(G.EV,fmtB(IO.ev),G.EVS+' '+(IO.ev/IO.rev26).toFixed(1)+'배 '+B('est'))}
+   ${kpi(G.SI,'22.1%',G.DTC+' 6.0일 '+B('rep'))}
+   ${kpi('2Q 매출','$99.3M','<span class="delta up">+66% YoY</span>')}
+   ${kpi('현금+단기투자','$303.7M','부채 없음 '+B('ok'))}
+   ${kpi(G.RW,'2H28','회사 가이던스 '+B('ok'))}
+   ${kpi('컨센서스 목표가','$10.70','<span class="delta down">-28%</span> 10명 '+B('rep'))}
+  </div>`)}
+</div>
+
+<div class="grid g3" style="margin-top:12px">
+ ${card('핵심 포인트 · ABCL','중요도 순',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">2상 효과가 크고 깨끗함<small>${G.PBO} 보정 하루 -5.3회(p&lt;0.001), 37%가 홍조 0회, 간수치 상승 없음</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">2</span><span class="x">파트너 대신 직접 3상을 택함<small>8/12 주당 $9.75로 $200M 증자. CEO "자체 상업화가 최선, 출시 2030년 전후"</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">3</span><span class="x">현재가는 ABCL635 단독 가치보다 훨씬 높음<small>밸류에이션 탭 기본 가정에서 시장이 후속 파이프라인·플랫폼에 수십억 달러를 얹고 있음</small></span><span class="r">${B('est')}</span></li>
+  <li><span class="i">4</span><span class="x">3상은 크고 김<small>약 1,500명·약 2.5년. 현금 소진이 커지는 구간</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">5</span><span class="x">플랫폼 매출은 계속 줄어듦<small>파트너 주도 프로그램 44→35개, 로열티·라이선스 매출 $10.4M→$0.1M</small></span><span class="r">${B('ok')}</span></li>
+ </ol>`)}
+ ${card('핵심 포인트 · IOVA','중요도 순',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">매출 가속, 가이던스 상향<small>상반기 $170.7M(+56%), 연 $410–420M → 하반기 분기 평균 약 $122M 필요(2Q 대비 +23%)</small></span><span class="r">${B('est')}</span></li>
+  <li><span class="i">2</span><span class="x">상반기 ${G.ATM}으로 3,890만 주 발행<small>평균 약 $3.80에 $148M, 주식 수 약 +9%. 주가가 4배가 된 지금 추가 발행 유인이 큼</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">3</span><span class="x">주가가 평균 목표가를 넘어섬<small>${G.EVS} 약 15배, 평균 목표가 $10.70 &lt; 주가</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">4</span><span class="x">다음 성장축은 폐암(NSCLC)<small>${G.ORR} 25.6%(10/39), ${G.DOR} 25개월+ 미도달 → 2027 ${G.SBLA}</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">5</span><span class="x">CEO가 5년째 '임시'<small>Frederick Vogt, 2021년부터 임시 CEO 겸 법무총괄</small></span><span class="r">${B('rep')}</span></li>
+ </ol>`)}
+ ${card('지난 버전 대비 정정','7건',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">Vertex 계약은 실제로 있음<small>7월 체결, 선급 $28M(10-Q). 지난번 '확인 안 됨' 판단이 틀림</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">2</span><span class="x">8/12 ABCL $200M 유상증자 누락<small>보통주 1,744만 + ${G.PFW} 308만, 주당 $9.75</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">3</span><span class="x">주가 $11.22/$13.24 → $14.59/$14.82<small>9/30 종가로 갱신</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">4</span><span class="x">ABCL 현금 $540M vs $565M<small>차이는 제한현금 $25M</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">5</span><span class="x">IOVA ATM 희석 누락<small>약 412M → 453M주</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">6</span><span class="x">ABCL575 적응증<small>아토피 피부염(OX40 계열)</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">7</span><span class="x">런웨이 계산 기준 변경<small>순손실 → 영업현금흐름(일회성 제외)</small></span><span class="r">${B('est')}</span></li>
+ </ol>`)}
+</div>
+
+<div class="grid g3" style="margin-top:12px">
+ ${card('시가총액 구성','현금 vs 사업가치',`
+  <div class="segrow"><span><span class="dot" style="--c:var(--abcl)"></span>ABCL 현금</span><span class="n">${fmtB(AB.cash)}</span><span class="n" style="color:var(--muted)">${(AB.cash/AB.cap*100).toFixed(0)}%</span></div>
+  <div class="segrow"><span><span class="dot" style="--c:var(--abcl);opacity:.45"></span>ABCL 사업가치(EV)</span><span class="n">${fmtB(AB.ev)}</span><span class="n" style="color:var(--muted)">${(AB.ev/AB.cap*100).toFixed(0)}%</span></div>
+  <div class="seg"><i style="--c:var(--abcl);width:${AB.cash/AB.cap*100}%"></i><i style="--c:var(--abcl);opacity:.45;width:${AB.ev/AB.cap*100}%"></i></div>
+  <div class="segrow" style="margin-top:8px"><span><span class="dot" style="--c:var(--iova)"></span>IOVA 현금</span><span class="n">${fmtB(IO.cash)}</span><span class="n" style="color:var(--muted)">${(IO.cash/IO.cap*100).toFixed(0)}%</span></div>
+  <div class="segrow"><span><span class="dot" style="--c:var(--iova);opacity:.45"></span>IOVA 사업가치(EV)</span><span class="n">${fmtB(IO.ev)}</span><span class="n" style="color:var(--muted)">${(IO.ev/IO.cap*100).toFixed(0)}%</span></div>
+  <div class="seg"><i style="--c:var(--iova);width:${IO.cash/IO.cap*100}%"></i><i style="--c:var(--iova);opacity:.45;width:${IO.ev/IO.cap*100}%"></i></div>
+  <p class="note">ABCL은 시총의 약 15%가 현금이고 나머지 약 $4B가 ABCL635와 후속 파이프라인 값.</p>`)}
+ ${card('공매도 · 컨센서스','9/30',`
+  <div class="segrow"><span><span class="dot" style="--c:var(--abcl)"></span>ABCL ${G.SI}</span><span class="n">15.4%</span><span></span></div>
+  <div class="seg"><i style="--c:var(--abcl);width:15.4%"></i></div>
+  <div class="segrow"><span><span class="dot" style="--c:var(--iova)"></span>IOVA ${G.SI}</span><span class="n">22.1%</span><span></span></div>
+  <div class="seg"><i style="--c:var(--iova);width:22.1%"></i></div>
+  <div class="segrow" style="margin-top:8px"><span>ABCL 주가 / 평균 목표가</span><span class="n">$14.59 / $16.67</span><span class="delta up">+14%</span></div>
+  <div class="segrow"><span>IOVA 주가 / 평균 목표가</span><span class="n">$14.82 / $10.70</span><span class="delta down">-28%</span></div>
+  <p class="note">IOVA는 목표가 갱신이 주가를 못 따라간 상태(HCW $20, Barclays·GS $15). 출처 StockAnalysis ${B('rep')}</p>`)}
+ ${card('다음 90일','날짜순',`<div class="tl">${CAL.filter(c=>c.soon).map(tlRow).join('')}</div>`)}
+</div>`]);
+
+/* ABCL */
+V.push(['abcl','ABCL','a',()=>`
+<div class="grid g4">
+ ${card('손익 (2Q26)','10-Q '+B('ok'),`<div class="tw"><table style="min-width:0"><tr><th></th><th class="n">2Q26</th><th class="n">2Q25</th></tr>
+  <tr><td>연구 수수료</td><td class="n">3.9</td><td class="n">6.6</td></tr>
+  <tr><td>라이선스·로열티</td><td class="n">0.1</td><td class="n">10.4</td></tr>
+  <tr><td><b>매출</b></td><td class="n"><b>4.1</b></td><td class="n">17.1</td></tr>
+  <tr><td>R&amp;D</td><td class="n">46.0</td><td class="n">39.2</td></tr>
+  <tr><td>SG&amp;A</td><td class="n">13.9</td><td class="n">22.0</td></tr>
+  <tr><td><b>순손실</b></td><td class="n"><b>-55.4</b></td><td class="n">-34.7</td></tr></table></div><p class="note">단위 $M</p>`)}
+ ${card('현금 흐름 (1H26)','10-Q '+B('ok'),`
+  <div class="hb">
+   <div class="hbr" style="--c:var(--down)"><span class="lb">영업 CF (보고)</span><span class="tr"><i style="width:7.6%"></i></span><span class="vv">-7.6</span></div>
+   <div class="hbr" style="--c:var(--up)"><span class="lb">Jazz 선급 포함</span><span class="tr"><i style="width:56%"></i></span><span class="vv">+56.0</span></div>
+   <div class="hbr" style="--c:var(--up)"><span class="lb">Bruker 합의금 포함</span><span class="tr"><i style="width:36%"></i></span><span class="vv">+36.0</span></div>
+   <div class="hbr" style="--c:var(--down)"><span class="lb">일회성 제외 소진</span><span class="tr"><i style="width:99.6%"></i></span><span class="vv">-99.6</span></div>
+  </div><p class="note">일회성 제외 시 연 약 $200M 소진 ${B('est')}. 3상이 시작되면 커짐.</p>`)}
+ ${card('현금 브리지','6/30 → 9/30 '+B('est'),`
+  <div class="wf">${[['6/30 현금(제한 포함)',0,565.1,'var(--fg2)'],['+ 증자 순수입',565.1,187,'var(--up)'],['+ Vertex 선급',752.1,28,'var(--up)'],['- 3Q 소진(추정)',730.1,50,'var(--down)'],['9/30 추정 현금',0,730.1,'var(--abcl)'],['+ 정부지원 미사용',730.1,110,'var(--blue)']].map(r=>`<div class="wfr"><span>${r[0]}</span><span class="tr"><i style="--c:${r[3]};left:${r[1]/900*100}%;width:${r[2]/900*100}%"></i></span><span class="vv">${r[2].toFixed(0)}</span></div>`).join('')}</div>
+  <p class="note">증자 순수입은 총 $200M에서 수수료 약 6.5%를 뺀 추정. Jazz 세 번째 프로그램 $28M은 미반영.</p>`)}
+ ${card('주식 수 브리지','백만 주 '+B('est'),`
+  <div class="wf">${[['6/30 발행',0,AB.sh0,'var(--fg2)'],['+ 8월 증자',AB.sh0,AB.offer,'var(--abcl)'],['+ 사전납입 워런트',AB.sh0+AB.offer,AB.pfw,'var(--abcl)'],['+ 옵션·RSU(순)',AB.basic,AB.tsm,'var(--violet)'],['완전희석',0,AB.fd,'var(--fg)']].map(r=>`<div class="wfr"><span>${r[0]}</span><span class="tr"><i style="--c:${r[3]};left:${r[1]/400*100}%;width:${r[2]/400*100}%"></i></span><span class="vv">${r[2].toFixed(1)}</span></div>`).join('')}</div>
+  <p class="note">옵션 6,630만(평균 행사가 $1.18·$6.53) + RSU 980만, 현재가 기준 자사주 매입법. ${G.FD} 시총 ${fmtB(AB.fdcap)}.</p>`)}
+
+ ${card(`ABCL635 · ${G.NK3} 항체`,'1상(5월) + 2상(8/10) '+B('ok'),`
+  <div class="kgrid">
+   ${kpi('빈도 감소 (4주)','-83%',G.PBO+' -33% · 보정 -5.3회/일')}
+   ${kpi('심각도 감소','-58%',G.PBO+' -12% · p&lt;0.001')}
+   ${kpi('홍조 0회 도달','37%','심각도 0점 24~25% '+B('rep'))}
+   ${kpi('반감기','~24일','월 1회 피하주사 가능')}
+  </div>
+  <div class="tw"><table><tr><th>항목</th><th>내용</th></tr>
+   <tr><td>2상 설계</td><td>92명, 1:1 무작위·이중맹검, 600mg 단회 피하주사, 4주 평가, 1주차부터 유의</td></tr>
+   <tr><td>안전성</td><td>중대·중증 이상반응 0, 이상반응 중단 0, 간효소 상승 없음(1상). 흔한 이상반응: 두통·피로·주사부위</td></tr>
+   <tr><td>1상</td><td>SAD 30~900mg(40명), MAD 300~600mg 월 1회(폐경 여성 16명), 남성 테스토스테론 억제로 표적 결합 확인</td></tr>
+   <tr><td>한계</td><td>4주 단회 투여 데이터. 경쟁약 허가 시험은 12주 평가라 직접 비교 불가</td></tr>
+  </table></div>`,'s2')}
+ ${card('경영진 발언 · Cantor (9/9)','트랜스크립트 요약 '+B('rep'),`
+  <div class="quote" style="--c:var(--abcl)">출시는 2030년 전후. 자체 상업화가 가장 선호하는 시나리오, 조건 맞는 파트너면 열려 있음<small>Carl Hansen CEO</small></div>
+  <div class="quote" style="--c:var(--abcl)">3상 약 1,500명, 공동 1차 지표는 빈도·심각도, 약 2.5년. 상업 용량은 월 1회 300mg 가능성</div>
+  <div class="quote" style="--c:var(--abcl)">FDA ${G.MIDD} 프로그램 진입. 유방암·전립선암 치료로 생기는 안면홍조 2상 2건 계획</div>
+  <div class="quote" style="--c:var(--abcl)">반감기를 더 늘린 후속 NK3R 항체를 IND 준비 중. "빈 자리를 남기지 않겠다"</div>
+  <p class="note">요약본에 연도 표기 오류가 있어 3상 개시 연도는 공식 확인 전까지 ${B('unk')}.</p>`,'s2')}
+
+ ${card('파이프라인','6/30 기준',`<div class="tw"><table><tr><th>프로그램</th><th>적응증·기전</th><th>단계</th><th>다음</th></tr>
+  <tr><td><b>ABCL635</b></td><td>폐경 ${G.VMS} · NK3R 항체</td><td>2상 완료</td><td>3상(약 1,500명)</td></tr>
+  <tr><td>ABCL635</td><td>유방암·전립선암 치료 유발 VMS</td><td>계획</td><td>2상 2건</td></tr>
+  <tr><td>후속 NK3R</td><td>장기 지속형</td><td>IND 준비</td><td>-</td></tr>
+  <tr><td>ABCL575</td><td>아토피 피부염 · OX40 계열</td><td>1상 완료</td><td>4Q 톱라인 후 중단</td></tr>
+  <tr><td>ABCL688</td><td>GPCR 표적</td><td>IND 준비</td><td>2027 임상 ${B('clm')}</td></tr>
+  <tr><td>ABCL386</td><td>종양(${G.TCE} 추정)</td><td>IND 준비</td><td>2027 임상 ${B('clm')}</td></tr></table></div>`,'s2')}
+ ${card('파트너십','10-Q '+B('ok'),`<ol class="rl">
+  <li><span class="i">1</span><span class="x">Jazz · ${G.TCE} (2026-06)<small>선급 $56M 수령 + 세 번째 프로그램 착수 시 $28M, 프로그램당 최대 $792M + 로열티</small></span><span class="r">$84M</span></li>
+  <li><span class="i">2</span><span class="x">Vertex · 자가면역 다중특이 TCE (2026-07)<small>선급 $28M + 마일스톤·단계별 로열티</small></span><span class="r">$28M</span></li>
+  <li><span class="i">3</span><span class="x">Bruker 특허 합의 (2025-12)<small>일시금 $36M + Beacon 장비 전 세계 판매 로열티</small></span><span class="r">$36M</span></li>
+  <li><span class="i">4</span><span class="x">AbbVie · 종양 TCE 확대 (2025 초)<small>조건 비공개</small></span><span class="r">-</span></li>
+ </ol>
+  <div class="segrow"><span>파트너 주도 프로그램</span><span class="n">35</span><span class="delta down">44→35</span></div><div class="seg"><i style="--c:var(--abcl);width:100%;opacity:.35"></i></div>
+  <div class="segrow"><span>임상 단계 지분 분자</span><span class="n">12</span><span></span></div><div class="seg"><i style="--c:var(--abcl);width:34%;opacity:.6"></i></div>
+  <div class="segrow"><span>자체 임상</span><span class="n">2</span><span></span></div><div class="seg"><i style="--c:var(--abcl);width:6%"></i></div>`,'s2')}
+
+ ${card('증자 · 내부자 거래','8월',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">유상증자 가격 결정 (8/12)<small>$9.75 · 총 $200M · Jefferies, JPM, Cantor, UBS, BMO</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">2</span><span class="x">CFO Andrew Booth 장내 매수 (8/14)<small>37,200주 @ $10.32</small></span><span class="r">${B('clm')}</span></li>
+  <li><span class="i">3</span><span class="x">이사 John Montalbano 장내 매수 (8/18)<small>10,000주 @ $11.03</small></span><span class="r">${B('clm')}</span></li>
+ </ol><p class="note">내부자 매수는 Prescott 게시물의 Form 4 캡처 기준, SEC 원문 대조 전.</p>`)}
+ ${card('애널리스트','목표가',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">Truist<small>$12 → $30 · Buy (8/11)</small></span><span class="r">$30</span></li>
+  <li><span class="i">2</span><span class="x">JonesResearch<small>$13 → $25 (8/10)</small></span><span class="r">$25</span></li>
+  <li><span class="i">3</span><span class="x">J.P. Morgan<small>신규 Overweight · 의사 설문 근거 (9/29)</small></span><span class="r">$17</span></li>
+  <li><span class="i">4</span><span class="x">BMO<small>$7 → $15 (8/11)</small></span><span class="r">$15</span></li>
+  <li><span class="i">·</span><span class="x">평균 (10명)</span><span class="r">$16.67</span></li>
+ </ol>`)}
+ ${card('부채성 의무 · 우발','10-Q '+B('ok'),`<ol class="rl">
+  <li><span class="i">1</span><span class="x">리스 부채<small>유동 $5.7M + 비유동 $129.9M</small></span><span class="r">$135.6M</span></li>
+  <li><span class="i">2</span><span class="x">Dayhu JV 모기지 보증<small>CAD 42M 한도</small></span><span class="r">$29.6M</span></li>
+  <li><span class="i">3</span><span class="x">정부 지원 미사용분<small>캐나다 CAD 103.1M + BC주 CAD 53.0M, 조건부</small></span><span class="r">$110M</span></li>
+ </ol><p class="note">경영진: 현 계획 기준 최소 36개월 자금 충분(증자 전 문구).</p>`,'s2')}
+</div>`]);
+
+/* IOVA */
+V.push(['iova','IOVA','i',()=>`
+<div class="grid g4">
+ ${card('반기 매출','$M',`
+  <div class="vbars">${[['1H25',109.3,0],['2H25',150,1],['1H26',170.7,0],['2H26',244.3,2]].map(r=>`<div class="vb" style="--c:var(--iova)"><span>${r[1].toFixed(0)}</span><i class="${r[2]?'est':''}" style="height:${r[1]/260*100}%"></i></div>`).join('')}</div>
+  <div class="vlab"><span>1H25</span><span>2H25*</span><span>1H26</span><span>2H26E</span></div>
+  <p class="note">*2H25는 '연 약 60% 성장' 문구로 역산 ${B('est')}. 2H26E는 가이던스 중간값 $415M에서 상반기를 뺀 값 ${B('est')}.</p>`)}
+ ${card('2Q26 매출 구성','10-Q·IR',`
+  <div class="dwrap"><div class="donut" style="background:conic-gradient(var(--iova) 0 ${91/99.3*360}deg,var(--blue) 0 360deg)"></div>
+  <div style="display:grid;gap:6px;min-width:0;flex:1">
+   <div class="segrow"><span><span class="dot" style="--c:var(--iova)"></span>Amtagvi</span><span class="n">~$91M</span><span class="n" style="color:var(--muted)">92%</span></div>
+   <div class="segrow"><span><span class="dot" style="--c:var(--blue)"></span>Proleukin</span><span class="n">~$8M</span><span class="n" style="color:var(--muted)">8%</span></div>
+   <div class="segrow"><span>1Q26 → 2Q26</span><span class="n">71.4 → 99.3</span><span class="delta up">+39%</span></div>
+  </div></div>
+  <p class="note">Amtagvi ${G.WAC} $515,000 → 2Q 약 177명 치료 추정(순가격이 낮으면 더 많음) ${B('est')}</p>`)}
+ ${card('손익 (2Q26)','10-Q '+B('ok'),`<div class="tw"><table style="min-width:0"><tr><th></th><th class="n">2Q26</th><th class="n">2Q25</th></tr>
+  <tr><td>매출</td><td class="n">99.3</td><td class="n">60.0</td></tr>
+  <tr><td>매출원가</td><td class="n">43.6</td><td class="n">48.9</td></tr>
+  <tr><td>${G.GM}*</td><td class="n">56%</td><td class="n">-</td></tr>
+  <tr><td>R&amp;D</td><td class="n">58.9</td><td class="n">77.9</td></tr>
+  <tr><td>SG&amp;A</td><td class="n">39.3</td><td class="n">37.6</td></tr>
+  <tr><td><b>순손실</b></td><td class="n"><b>-47.3</b></td><td class="n">-111.7</td></tr></table></div><p class="note">*회사 기준(감가상각 제외). 순손실 1Q26 -79.1 → 2Q -47.3.</p>`)}
+ ${card('현금 · 희석','1H26 '+B('ok'),`
+  <div class="hb">
+   <div class="hbr" style="--c:var(--down)"><span class="lb">영업 CF 1H26</span><span class="tr"><i style="width:${132.9/180*100}%"></i></span><span class="vv">-132.9</span></div>
+   <div class="hbr" style="--c:var(--down)"><span class="lb">영업 CF 1H25</span><span class="tr"><i style="width:${171.1/180*100}%;opacity:.55"></i></span><span class="vv">-171.1</span></div>
+   <div class="hbr" style="--c:var(--up)"><span class="lb">${G.ATM} 순조달</span><span class="tr"><i style="width:${148.1/180*100}%"></i></span><span class="vv">+148.1</span></div>
+  </div>
+  <div class="segrow"><span>주식 수</span><span class="n">~412M → 453M</span><span class="delta down">+9.4%</span></div>
+  <p class="note">상반기 소진 속도면 현금 $304M은 약 1.1년. 회사의 2H28 런웨이는 매출 증가로 소진이 빠르게 준다는 전제 ${B('est')}</p>`)}
+
+ ${card('IOV-LUN-202 · 비편평 NSCLC','2025-11 데이터 '+B('ok'),`
+  <div class="kgrid">${kpi(G.ORR,'25.6%','10/39명 · CR 2')}${kpi('질병통제율','71.8%','')}${kpi(G.DOR,'미도달','추적 중앙값 25.4개월')}${kpi('대상','2차 이상','면역항암제·항암화학 후, 표적 변이 없음')}</div>
+  <p class="body">등록 거의 완료, 4분기 업데이트, 2027 ${G.SBLA}, 2027 하반기 출시 가능. 이 환자군 표준인 도세탁셀의 반응률은 대략 10%대 ${B('mem')}라 반응의 지속성이 핵심 차별점.</p>`,'s2')}
+ ${card('파이프라인 · 지역 확장','2Q26 IR',`<div class="tw"><table><tr><th>프로그램</th><th>내용</th><th>다음</th></tr>
+  <tr><td><b>Amtagvi US</b></td><td>진행성 흑색종 2차 이상, 2024-02 승인</td><td>${G.ATC} ~100곳 → 연말 110+</td></tr>
+  <tr><td>Amtagvi EU</td><td>2025-07 ${G.MAA} 철회(EMA: 효능 평가 불가) → 2026-07 재제출</td><td>회사 기대: 연말 ${B('clm')}</td></tr>
+  <tr><td>TILVANCE-301</td><td>1차 흑색종 + 키트루다, 3상</td><td>조기 중간분석으로 sBLA 가능</td></tr>
+  <tr><td>SARATOGA</td><td>육종(UPS/DDLPS), 등록 시험</td><td>ESMO 10월</td></tr>
+  <tr><td>IOV-END-201</td><td>자궁내막 장액성암</td><td>FDA 협의</td></tr>
+  <tr><td>IOV-4001/5001/3001</td><td>차세대 TIL</td><td>1/2상</td></tr></table></div>`,'s2')}
+
+ ${card('애널리스트','목표가',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">H.C. Wainwright<small>$9 → $20 · Buy</small></span><span class="r">$20</span></li>
+  <li><span class="i">2</span><span class="x">Barclays<small>$13 → $15 · Overweight</small></span><span class="r">$15</span></li>
+  <li><span class="i">3</span><span class="x">Goldman Sachs<small>Buy</small></span><span class="r">$15</span></li>
+  <li><span class="i">·</span><span class="x">평균 (10명, 갱신 지연)</span><span class="r">$10.70</span></li>
+ </ol><p class="note">Seeking Alpha 기고 "턴어라운드는 이미 가격에 반영" Hold 하향 ${B('rep')}</p>`)}
+ ${card('지배구조 · 신호','',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">임시 CEO 5년째<small>Frederick Vogt(법무총괄 겸임), 2021-05 전임 CEO 사임 후</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">2</span><span class="x">Amtagvi 박스 경고<small>치료 관련 사망, 장기 혈구감소, 중증 감염 등</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">3</span><span class="x">EU 첫 신청 철회 이력<small>효능 평가 불가 판단</small></span><span class="r">${B('ok')}</span></li>
+ </ol>`)}
+ ${card('가이던스 해부','9/29 '+B('ok'),`
+  <div class="hb">
+   <div class="hbr" style="--c:var(--muted)"><span class="lb">기존 가이던스 중간</span><span class="tr"><i style="width:${360/430*100}%"></i></span><span class="vv">360</span></div>
+   <div class="hbr" style="--c:var(--iova)"><span class="lb">신규 가이던스 중간</span><span class="tr"><i style="width:${415/430*100}%"></i></span><span class="vv">415</span></div>
+   <div class="hbr" style="--c:var(--blue)"><span class="lb">기존 컨센서스</span><span class="tr"><i style="width:${403/430*100}%"></i></span><span class="vv">~403</span></div>
+   <div class="hbr" style="--c:var(--fg2)"><span class="lb">2Q × 4</span><span class="tr"><i style="width:${397.2/430*100}%"></i></span><span class="vv">397</span></div>
+  </div><p class="note">상향 폭은 컨센서스 대비 약 3%인데 주가는 +31~35%. 실적 자체보다 공매도 22%의 숏커버가 반응을 키운 것으로 보임 ${B('est')}</p>`,'s2')}
+</div>`]);
+
+/* VALUATION */
+V.push(['val','밸류에이션','val',()=>`
+<div class="grid g2">
+ ${card(`ABCL635 ${G.RNPV} 모델`,'제 가정 '+B('est'),`
+  <p class="body">ABCL635 하나의 위험조정 가치에 현금과 나머지 파이프라인 가치를 더해 ${G.FD} 주식 수로 나눕니다. 출시 2030, 5년간 피크까지 선형 증가, 2041년까지만 반영(잔존가치 없음), 3상 비용은 2027~29 균등.</p>
+  <div class="btns" id="abq"></div>
+  <div class="ctl" style="--c:var(--abcl)"><label for="a1">피크 매출 ($B)</label><input type="range" id="a1" min="0.5" max="6" step="0.1" value="1.5"><output id="o1"></output></div>
+  <div class="ctl" style="--c:var(--abcl)"><label for="a2">영업이익률</label><input type="range" id="a2" min="10" max="60" step="5" value="40"><output id="o2"></output></div>
+  <div class="ctl" style="--c:var(--abcl)"><label for="a3">${G.POS}</label><input type="range" id="a3" min="20" max="90" step="5" value="60"><output id="o3"></output></div>
+  <div class="ctl" style="--c:var(--abcl)"><label for="a4">할인율</label><input type="range" id="a4" min="6" max="16" step="1" value="10"><output id="o4"></output></div>
+  <div class="ctl" style="--c:var(--abcl)"><label for="a5">3상 비용 ($M)</label><input type="range" id="a5" min="150" max="700" step="25" value="350"><output id="o5"></output></div>
+  <div class="ctl" style="--c:var(--abcl)"><label for="a6">기타 파이프라인 ($B)</label><input type="range" id="a6" min="0" max="4" step="0.25" value="0.5"><output id="o6"></output></div>
+  <div class="out" id="aout"></div>
+  <p class="note">세율 15%. 실패 시 ABCL635 가치 0. 경영진 언급: 피크 최대 $2B, 시장 최대 $6B ${B('clm')}. 잔존가치와 인수 프리미엄을 넣지 않아 보수적인 모델입니다.</p>`)}
+ ${card(`IOVA ${G.EVS} 모델`,'제 가정 '+B('est'),`
+  <p class="body">2027년 매출에 배수를 곱해 기업가치를 내고, 현금과 추가 ATM 희석을 반영해 주가로 환산합니다.</p>
+  <div class="btns" id="ioq"></div>
+  <div class="ctl" style="--c:var(--iova)"><label for="b1">2027 매출 ($M)</label><input type="range" id="b1" min="400" max="1000" step="10" value="580"><output id="p1"></output></div>
+  <div class="ctl" style="--c:var(--iova)"><label for="b2">${G.EVS} 배수</label><input type="range" id="b2" min="3" max="16" step="0.5" value="8"><output id="p2"></output></div>
+  <div class="ctl" style="--c:var(--iova)"><label for="b3">추가 ATM ($M)</label><input type="range" id="b3" min="0" max="500" step="25" value="150"><output id="p3"></output></div>
+  <div class="out" id="iout"></div>
+  <p class="note">추가 ATM은 현재가 발행 가정. 현금은 6/30 $303.7M + ATM 조달분. 상업화 바이오 성장주의 매출 배수는 성장률·이익 가시성에 따라 대략 4~12배 ${B('mem')}.</p>`)}
+</div>
+<div class="grid g3" style="margin-top:12px">
+ ${card('현재가에 내재된 가정 · ABCL','역산',`<ol class="rl" id="abimp"></ol>`)}
+ ${card('현재가에 내재된 가정 · IOVA','역산',`<ol class="rl" id="ioimp"></ol>`)}
+ ${card('참고 거래','',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">Astellas ← Ogeda (fezolinetant, 2상 단계, 2017)<small>선급 약 $550M + 마일스톤 약 $300M</small></span><span class="r">${B('clm')}</span></li>
+  <li><span class="i">2</span><span class="x">Gilead ← Kite (CAR-T 승인 직전, 2017-08)<small>주당 $180, 약 $11.9B</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">3</span><span class="x">AbbVie ← IGI (삼중특이 TCE, 2025-07)<small>선급 $700M + 마일스톤 최대 약 $1.25B</small></span><span class="r">${B('clm')}</span></li>
+  <li><span class="i">4</span><span class="x">Carlyle·SK ← bluebird (2025)<small>주당 $3+CVR $6.84 또는 $5 현금</small></span><span class="r">${B('ok')}</span></li>
+ </ol>`)}
+</div>`]);
+
+/* COMPETITION */
+V.push(['comp','경쟁 구도','comp',()=>`
+<div class="grid g2">
+ ${card(`폐경 ${G.VMS} · ${G.NK3} 계열`,'',`<div class="tw"><table>
+  <tr><th>약</th><th>회사</th><th>투여</th><th>상태</th><th>매출·특징</th></tr>
+  <tr><td><b>Veozah</b> (fezolinetant)</td><td>Astellas</td><td>경구 매일</td><td>2023-05 승인</td><td>FY2025 ¥46.6B(+37.7%) ${B('ok')} · 간 손상 박스 경고 ${B('rep')}</td></tr>
+  <tr><td><b>Lynkuet</b> (elinzanetant)</td><td>Bayer</td><td>경구 매일, NK1+NK3</td><td>2025-10-24 FDA 승인, EU 승인</td><td>출시 1년차 ${B('rep')}</td></tr>
+  <tr><td><b>ABCL635</b></td><td>AbCellera</td><td>피하주사 월 1회</td><td>2상 완료</td><td>4주 단회 -83% · 간효소 상승 없음 ${B('ok')}</td></tr>
+  <tr><td>후속 NK3R 항체</td><td>AbCellera</td><td>더 긴 간격 목표</td><td>IND 준비</td><td>${B('rep')}</td></tr></table></div>
+  <p class="note">회사는 효능이 경구약의 약 2배, 심각도는 4~5배라고 주장 ${B('clm')}. 경구약 허가 시험은 12주 평가라 시험 간 직접 비교는 신뢰도가 낮음.</p>`)}
+ ${card('관전 포인트 · NK3 시장','',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">경구약 두 개가 시장을 먼저 키우는 중<small>Veozah 연 약 $300M대, Lynkuet 출시 1년차. 항체는 2030년 진입이라 후발</small></span><span class="r">${B('est')}</span></li>
+  <li><span class="i">2</span><span class="x">주사형 수용성은 미지수<small>매일 알약 vs 월 1회 주사. 회사는 직접판매·소비자 직접 모델 검토</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">3</span><span class="x">간 안전성이 차별화의 핵심<small>3상 1,500명 규모에서 유지되는지</small></span><span class="r">${B('est')}</span></li>
+  <li><span class="i">4</span><span class="x">종양 환자 안면홍조는 호르몬제를 못 쓰는 환자군<small>유방암·전립선암 치료 환자로 확장 계획</small></span><span class="r">${B('rep')}</span></li>
+ </ol>`)}
+ ${card('세포치료 상업화 비교','',`<div class="tw"><table>
+  <tr><th>제품</th><th>기전</th><th>상업 성과</th><th>시사점</th></tr>
+  <tr><td><b>Amtagvi</b></td><td>TIL, 고형암</td><td>2Q26 약 $91M, 전 분기 +51%</td><td>고형암 세포치료 첫 성공 궤도</td></tr>
+  <tr><td>Yescarta</td><td>CAR-T, 혈액암</td><td>2024 $1.57B, 2025 감소세(3Q25 -10%)</td><td>성숙하면 성장 정체 ${B('rep')}</td></tr>
+  <tr><td>Provenge</td><td>자가 면역세포</td><td>기대 $4B, 실제 연 ~$300M, 2014 파산</td><td>제조원가가 생사 결정 ${B('ok')}</td></tr>
+  <tr><td>Tecelra</td><td>TCR-T, 고형암</td><td>출시 후 $55M에 매각(2025)</td><td>규모 없으면 생존 어려움 ${B('ok')}</td></tr></table></div>`,'s2')}
+</div>`]);
+
+/* CALENDAR */
+V.push(['cal','촉매 캘린더','cal',()=>card('촉매 타임라인','날짜순',`<div class="flt" id="cf"></div><div class="tl" id="tl"></div>`)]);
+
+/* RISKS */
+const RISK=[
+ ['a','3상 실패·지연',2,3],['a','경쟁 차별화·보험 등재 실패',2,2],['a','3상 비용으로 추가 희석',2,2],['a','기대 선반영 후 되돌림',3,2],['a','파트너 매출 축소',3,1],['a','후속 자산에서 플랫폼 재현 실패',2,2],
+ ['i','하반기 매출 가이던스 미달',2,3],['i','ATM 추가 희석',3,2],['i','NSCLC 데이터 실망',2,3],['i','EU 재차 불허',2,1],['i','제조·품질 사고',1,3],['i','임시 CEO 체제 지속',2,1],['i','숏커버 후 변동성',3,1]
+];
+V.push(['risk','리스크','risk',()=>`
+<div class="grid g2">
+ ${card('리스크 매트릭스','가능성 × 영향 · 제 판단 '+B('est'),`
+  <div class="rm">${[3,2,1].map(im=>`<div class="ax y">${['','낮은','중간','높은'][im]} 영향</div>`+[1,2,3].map(lk=>`<div class="cell" style="background:color-mix(in srgb,var(--down) ${im*lk*3}%,var(--line2))">${RISK.filter(r=>r[2]===lk&&r[3]===im).map(r=>`<span class="rc" style="--c:var(--${r[0]==='a'?'abcl':'iova'})">${r[1]}</span>`).join('')}</div>`).join('')).join('')}
+  <div></div><div class="ax">가능성 낮음</div><div class="ax">중간</div><div class="ax">높음</div></div>`)}
+ ${card('상세','',`<ol class="rl">
+  <li><span class="i">A</span><span class="x">3상 실패·지연<small>4주·92명 데이터를 1,500명·장기로 확장. 3상에서 효과 크기가 줄어드는 것이 일반적</small></span><span class="r"><b class="b hi">높음</b></span></li>
+  <li><span class="i">A</span><span class="x">경쟁·보험<small>2030 진입 시 경구약 2개가 자리 잡은 상태. 주사형 가격·등재 경로 불확실</small></span><span class="r"><b class="b md">중간</b></span></li>
+  <li><span class="i">A</span><span class="x">희석<small>현금 ~$730M + 지원금 $110M. 3상과 상업화를 직접 하면 추가 조달 가능성</small></span><span class="r"><b class="b md">중간</b></span></li>
+  <li><span class="i">I</span><span class="x">가이던스<small>하반기 분기 평균 ~$122M 필요. 2Q $99M에서 가속 지속이 전제</small></span><span class="r"><b class="b hi">높음</b></span></li>
+  <li><span class="i">I</span><span class="x">ATM<small>상반기 평균 $3.80에 3,890만 주. $14대에선 같은 금액이 희석 1/4이지만 발행 유인은 큼</small></span><span class="r"><b class="b md">중간</b></span></li>
+  <li><span class="i">I</span><span class="x">NSCLC<small>ORR 25.6%는 39명 기준. 등록 코호트에서 재현돼야 2027 sBLA</small></span><span class="r"><b class="b hi">높음</b></span></li>
+ </ol>`)}
+</div>`]);
+
+/* PRESCOTT */
+const PX=[
+ ['2026-09-30','파이프라인 확률 연습','연 2개 임상 진입, 성공률 30%, 승인 약당 연 $2B 가정으로 5배·10배 매출 시나리오','2105446695362277870'],
+ ['2026-09-29','JPM 커버리지 개시 $17','"ABCL635 프로필은 효능·안전성·투여 편의 면에서 차별적" 문구 인용','2104991714033508465'],
+ ['2026-09-29','AI 파트너십 부재','AI를 쓰지만 프런티어 모델·칩 회사와 공개 제휴는 없다고 지적','2104995818436743519'],
+ ['2026-09-10','후속 NK3R 항체','CEO: 반감기를 늘린 후속 분자 IND 준비. MIDD 진입, 유방암→전립선암 2/3상 설계','2098053400084586698'],
+ ['2026-09-09','출시 2030 전후','CEO: 자체 상업화가 선호 시나리오, 파트너 여부 미정','2097757976966611080'],
+ ['2026-09-03','ABCL575 기대 낮춤','OX40 계열이 아토피에서 사실상 끝났다는 평가, 파트너 가능성 크게 감소','2095535758564049264'],
+ ['2026-08-18','내부자 매수','이사 Montalbano 10,000주 @ $11.03','2089788471116259520'],
+ ['2026-08-14','CFO 매수','Andrew Booth 37,200주 @ $10.32','2088300289702953347'],
+ ['2026-08-13','증자 해석','"$200M을 6~7% 희석에 확보, 총 유동성 약 $875M, 3년 이상 런웨이"','2087872681500676570'],
+ ['2026-08-11','증자 반응','데이터 직후 파트너 대신 증자 → 자체 개발 의지로 해석','2087279814642368559'],
+ ['2026-08-11','목표가 상향','BMO $7→$15, Truist $12→$30, JonesResearch $13→$25','2087167900993917435'],
+ ['2026-08-10','CEO 발언','"효능은 가장 공격적인 상단 시나리오도 넘었다", "회사 미래를 단일 자산과 동일시하는 위험"','2086795989743018465'],
+ ['2026-07-06','RepSeq 해설','기능 확인된 수천 개 세포를 지도로 수억 서열의 중·경쇄 짝을 복원','2073825583931502762'],
+ ['2026-06-28','de novo 설계 가능성','지금 한다는 주장은 아니며, 데이터 보유량상 "한다면 ABCL"이라는 입장','2071232116482810368'],
+ ['2026-05-09','핵심 아티클','플랫폼·GPCR·TCE·정부 지원·경영진 정렬. 매출 $1B × 14.75배 예시 계산','2052837514260471860'],
+];
+V.push(['px','Prescott 논점','x',()=>`
+<div class="grid g3">
+ ${card('누구의 시각인가','본인 공개 '+B('clm'),`<p class="body">X 계정 @JackPrescottX. ABCL 롱, 포트폴리오의 약 20%, 평단 약 $3.93, 생물학 비전공이라고 본인이 밝힘. 5/9 아티클 조회 33만으로 가장 영향력 있는 개인 롱 논객이라 심리 지표로도 의미가 있습니다.</p>
+  <p class="note">수집 범위: 2026-08-07~09-30 전체 38건(Chrome 로그인 세션), 그 이전은 상위 게시물과 개별 글 10건.</p>`)}
+ ${card('논점이 맞았던 것','결과 대조',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">ABCL635 2상 성공<small>예고한 시기(3Q) 그대로 8/10 발표</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">2</span><span class="x">TCE 딜<small>Jazz $84M, Vertex $28M 선급</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">3</span><span class="x">재평가<small>5월 시총 $1.57B → 약 3배</small></span><span class="r">${B('ok')}</span></li>
+ </ol>`)}
+ ${card('논점에서 빠진 것','제 판단',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">경쟁 시장의 시간차<small>경구약 2개가 2030년 전까지 시장을 선점</small></span><span class="r">${B('est')}</span></li>
+  <li><span class="i">2</span><span class="x">'100개+ 파트너 프로그램'의 실체<small>활성 35개, 로열티 매출 분기 $0.1M</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">3</span><span class="x">완전희석 주식 수<small>옵션 6,630만 개. 그의 계산은 기본 주식 수 기준</small></span><span class="r">${B('est')}</span></li>
+ </ol>`)}
+ ${card('게시물 피드','최신순',`<div class="tl">${PX.map(p=>`<div class="tli" style="--c:var(--abcl)"><span class="dt">${p[0]}</span><span class="pin"></span><span><b>${p[1]}</b><small>${p[2]}</small></span><span><a href="https://x.com/JackPrescottX/status/${p[3]}" target="_blank" rel="noopener">원문</a></span></div>`).join('')}</div>`,'s3')}
+</div>`]);
+
+/* ANALOGS */
+const AN=[
+ ['i','Dendreon · Provenge','2010–14','자가 면역세포. 기대 연 $4B → 실제 ~$300M, 원가율 77%→53%, 2014-11 파산보호','IOVA는 원가율 약 44%(2Q)로 출발점이 다름. 제조가 성장 상한이라는 구조는 같음','ok'],
+ ['i','Gilead ← Kite','2017','CAR-T 승인 직전 주당 $180, 약 $11.9B 인수. Yescarta는 2024 $1.57B 후 정체','세포치료도 전략 인수 대상. IOVA 현 EV 약 $6.4B','ok'],
+ ['i','bluebird bio','2025','유전자치료 3개 승인에도 주당 $3+CVR 또는 $5 현금에 매각','승인 ≠ 가치. 매출 성장과 현금 소진의 교차점이 핵심','ok'],
+ ['i','Adaptimmune · Tecelra','2025','첫 고형암 TCR-T 승인 후 $55M(+최대 $30M)에 매각','고형암 세포치료는 규모가 생존 조건','ok'],
+ ['a','Astellas · Veozah','2017–24','2상 단계 인수 후 2023 승인, 간 손상 박스 경고 추가, FY2025 ¥46.6B','ABCL635 차별화(간 안전성)의 근거이자 2상 후 파트너링 가격 선례','rep'],
+ ['a','Vir Biotechnology','2021–24','COVID 항체 윈드폴 후 파이프라인 전환, 주가 장기 하락','ABCL도 COVID 항체 윈드폴 이력. 차이는 이미 강한 2상 자산 보유','mem'],
+ ['a','Genmab · Regeneron','2000s–10s','항체 플랫폼에서 자체 블록버스터로 전환 성공','수년의 로열티 기반이 있었음. ABCL은 로열티 기반이 거의 없음','mem']
+];
+V.push(['hist','과거 사례','hist',()=>`<div class="grid g2">${AN.map(a=>card(`<span class="tag" style="--c:var(--${a[0]==='a'?'abcl':'iova'})">${a[1]}</span>`,a[2]+' '+B(a[5]),`<p class="body">${a[3]}</p><div class="quote" style="--c:var(--${a[0]==='a'?'abcl':'iova'})">${a[4]}</div>`)).join('')}</div>`]);
+
+/* SOURCES */
+const SRC=[
+ ['ABCL 10-Q 2Q26','https://www.sec.gov/Archives/edgar/data/0001703057/000170305726000046/abcl-20260630.htm'],
+ ['ABCL 2Q26 실적 (SEC)','https://www.sec.gov/Archives/edgar/data/1703057/000170305726000044/q22026earningspressrelease.htm'],
+ ['ABCL635 2상 (IR)','https://investors.abcellera.com/news/news-releases/2026/AbCellera-Announces-Positive-Top-Line-Phase-2-Clinical-Trial-Results-for-ABCL635-Demonstrating-Significant-Reduction-in-Frequency-and-Severity-of-Vasomotor-Symptoms-and-a-Favorable-Tolerability-Profile/default.aspx'],
+ ['ABCL 1Q26 · 1상 (IR)','https://investors.abcellera.com/news/news-releases/2026/AbCellera-Reports-Q1-2026-Business-Results--Announces-Positive-Interim-Phase-1-Clinical-Data-for-ABCL635/default.aspx'],
+ ['ABCL $200M 증자 (IR)','https://investors.abcellera.com/news/news-releases/2026/AbCellera-Announces-Pricing-of-Oversubscribed-200-Million-Public-Offering-of-Common-Shares-and-Pre-Funded-Warrants/default.aspx'],
+ ['ABCL Cantor 트랜스크립트','https://www.investing.com/news/transcripts/abcellera-at-cantor-healthcare-conference-nk3r-drug-boosts-hopes-93CH-4894897'],
+ ['ABCL JPM 개시','https://www.investing.com/news/analyst-ratings/jpmorgan-initiates-abcellera-stock-coverage-with-overweight-rating-93CH-4923064'],
+ ['ABCL–Bruker 합의 (IR)','https://investors.abcellera.com/news/news-releases/2025/AbCellera-and-Bruker-Reach-Global-Settlement-of-Patent-Litigation/default.aspx'],
+ ['ABCL 통계 (StockAnalysis)','https://stockanalysis.com/stocks/abcl/statistics/'],
+ ['IOVA 10-Q 2Q26','https://www.sec.gov/Archives/edgar/data/0001425205/000110465926091716/iova-20260630x10q.htm'],
+ ['IOVA 2Q26 실적','https://www.globenewswire.com/news-release/2026/08/06/3340124/0/en/iovance-biotherapeutics-reports-record-second-quarter-2026-revenue-of-99m-business-achievements-and-corporate-updates.html'],
+ ['IOVA 가이던스 상향','https://www.globenewswire.com/news-release/2026/09/29/3370675/0/en/iovance-biotherapeutics-raises-full-year-2026-revenue-guidance-to-410-to-420-million.html'],
+ ['IOVA NSCLC 데이터','https://www.globenewswire.com/news-release/2025/11/03/3179067/0/en/Iovance-Biotherapeutics-Reports-Potential-Best-in-Class-Clinical-Data-for-Lifileucel-TIL-Cell-Therapy-in-Advanced-Non-Small-Cell-Lung-Cancer-NSCLC.html'],
+ ['Amtagvi EU 철회 (EMA)','https://www.ema.europa.eu/en/documents/medicine-qa/questions-answers-withdrawal-application-marketing-authorisation-amtagvi-lifileucel_en.pdf'],
+ ['IOVA 통계 (StockAnalysis)','https://stockanalysis.com/stocks/iova/statistics/'],
+ ['Astellas FY2025 실적','https://www.astellas.com/content/dam/astellas-com/global/en/confidential-documents/financial-results/4q2025_en.pdf'],
+ ['Gilead–Kite (SEC)','https://www.sec.gov/Archives/edgar/data/0001510580/000119312517269386/d441582dex991.htm'],
+ ['Prescott 아티클 (X)','https://x.com/JackPrescottX/status/2052837514260471860']
+];
+V.push(['src','출처 · 방법','src',()=>`<div class="grid g2">
+ ${card('출처','1차 자료 우선',`<ol class="rl">${SRC.map((s,i)=>`<li><span class="i">${i+1}</span><span class="x"><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></span><span class="r"></span></li>`).join('')}</ol>`)}
+ ${card('계산 방법','재현 가능',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">ABCL 기본 주식 수<small>306.47M(6/30) + 17.44M(증자) + 3.08M(사전납입 워런트) = ${AB.basic.toFixed(1)}M</small></span><span class="r"></span></li>
+  <li><span class="i">2</span><span class="x">ABCL 완전희석<small>옵션 21.2M@$1.18 + 45.1M@$6.53 + RSU 9.8M, 행사대금으로 현재가에 자사주 매입 가정 → +${AB.tsm.toFixed(1)}M</small></span><span class="r"></span></li>
+  <li><span class="i">3</span><span class="x">ABCL 9/30 현금<small>$565.1M + 증자 순수입 ~$187M + Vertex $28M − 3Q 소진 ~$50M ≈ ${fmtB(AB.cash)}</small></span><span class="r"></span></li>
+  <li><span class="i">4</span><span class="x">ABCL 런웨이<small>(현금+지원금) ÷ 연 소진. 3상 없이 $200M/년 → 4.2년, 3상 포함 ~$315M/년 → 2.7년</small></span><span class="r"></span></li>
+  <li><span class="i">5</span><span class="x">IOVA EV<small>452.97M × $14.82 − $303.7M(6/30). 3분기 소진·ATM 미반영</small></span><span class="r"></span></li>
+  <li><span class="i">6</span><span class="x">IOVA 하반기 필요 매출<small>$415M − 상반기 $170.7M = $244.3M → 분기 평균 $122M</small></span><span class="r"></span></li>
+  <li><span class="i">7</span><span class="x">한계<small>9/30 이후 공시 미반영. 3분기 실제 현금은 11월 실적에서 확인 필요</small></span><span class="r"></span></li>
+ </ol>`)}
+</div>`]);
+
+/* ---------- render ---------- */
+const nav=$('#nav'), views=$('#views');
+V.forEach(([id,label,ic,fn])=>{
+  const b=document.createElement('button');b.innerHTML=`<svg viewBox="0 0 24 24">${ICON[ic]}</svg>${label}`;b.dataset.id=id;b.onclick=()=>show(id);nav.appendChild(b);
+  const s=document.createElement('section');s.id='v-'+id;s.hidden=true;s.innerHTML=fn();views.appendChild(s);
+});
+function show(id){
+  V.forEach(([v])=>{$('#v-'+v).hidden=v!==id});
+  [...nav.children].forEach(b=>{if(b.dataset.id===id)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
+  try{localStorage.setItem('abiova-view',id)}catch(e){}
+  window.scrollTo(0,0);
+}
+
+let cf='all';
+function renderCal(){
+  $('#cf').innerHTML=[['all','전체'],['a','ABCL'],['i','IOVA']].map(f=>`<button aria-pressed="${cf===f[0]}" data-f="${f[0]}">${f[1]}</button>`).join('');
+  [...$('#cf').children].forEach(b=>b.onclick=()=>{cf=b.dataset.f;renderCal()});
+  $('#tl').innerHTML=CAL.filter(c=>cf==='all'||c.tk===cf).map(tlRow).join('');
+}
+renderCal();
+
+function rnpv(peak,m,pos,r,ph3){
+  let v=0,cost=0;const tax=.15,t0=2026.75;
+  for(let y=2027;y<=2029;y++)cost+=ph3/3/Math.pow(1+r,y+.5-t0);
+  for(let y=2030;y<=2041;y++){const ramp=Math.min(1,(y-2029)*.2);v+=peak*1000*ramp*m*(1-tax)/Math.pow(1+r,y+.5-t0)}
+  return v*pos-cost;
+}
+function calcA(){
+  const peak=+$('#a1').value,m=+$('#a2').value/100,pos=+$('#a3').value/100,r=+$('#a4').value/100,ph3=+$('#a5').value,oth=+$('#a6').value*1000;
+  $('#o1').textContent='$'+peak.toFixed(1)+'B';$('#o2').textContent=Math.round(m*100)+'%';$('#o3').textContent=Math.round(pos*100)+'%';$('#o4').textContent=Math.round(r*100)+'%';$('#o5').textContent='$'+ph3+'M';$('#o6').textContent='$'+(oth/1000).toFixed(2)+'B';
+  const x=rnpv(peak,m,pos,r,ph3),ps=(x+AB.cash+oth)/AB.fd;
+  $('#aout').innerHTML=`<div><small>ABCL635 rNPV</small><b>${fmtB(x)}</b></div><div><small>+ 현금 + 기타</small><b>${fmtB(AB.cash+oth)}</b></div><div><small>주당 가치(완전희석)</small><b>$${ps.toFixed(2)}</b></div><div><small>현재가 대비</small><b class="${ps>=P.abcl?'up':'down'}">${ps>=P.abcl?'+':''}${((ps/P.abcl-1)*100).toFixed(0)}%</b></div>`;
+}
+['a1','a2','a3','a4','a5','a6'].forEach(i=>$('#'+i).oninput=calcA);
+const AQ={'보수':[1,30,45,12,450,0.25],'기본':[1.5,40,60,10,350,0.5],'회사 상단':[2,45,70,9,350,1],'현재가 수준':[3,45,70,9,350,2]};
+$('#abq').innerHTML=Object.keys(AQ).map(k=>`<button data-k="${k}">${k}</button>`).join('');
+[...$('#abq').children].forEach(b=>b.onclick=()=>{AQ[b.dataset.k].forEach((v,i)=>$('#a'+(i+1)).value=v);calcA()});
+calcA();
+(function(){
+  const mkt=P.abcl*AB.fd, base=rnpv(1.5,.4,.6,.10,350), implied=mkt-AB.cash-base;
+  let pk=0.5;while(pk<10&&rnpv(pk,.4,.6,.10,350)<mkt-AB.cash)pk+=0.05;
+  $('#abimp').innerHTML=`<li><span class="i">1</span><span class="x">기본 가정의 ABCL635 가치<small>피크 $1.5B · 이익률 40% · 성공 60% · 할인 10%</small></span><span class="r">${fmtB(base)}</span></li>
+  <li><span class="i">2</span><span class="x">시장이 나머지에 매기는 값<small>완전희석 시총 − 현금 − ABCL635. 후속 파이프라인·플랫폼·인수 기대</small></span><span class="r">${fmtB(implied)}</span></li>
+  <li><span class="i">3</span><span class="x">ABCL635 하나로 현재가를 설명하려면 필요한 피크 매출<small>같은 조건, 기타 가치 0</small></span><span class="r">${pk>=10?'$10B+':'$'+pk.toFixed(1)+'B'}</span></li>`;
+})();
+
+function calcI(){
+  const rev=+$('#b1').value,mul=+$('#b2').value,atm=+$('#b3').value;
+  $('#p1').textContent='$'+rev+'M';$('#p2').textContent=mul.toFixed(1)+'x';$('#p3').textContent='$'+atm+'M';
+  const sh=IO.sh+atm/P.iova,ps=(rev*mul+IO.cash+atm)/sh;
+  $('#iout').innerHTML=`<div><small>기업가치</small><b>${fmtB(rev*mul)}</b></div><div><small>주식 수</small><b>${sh.toFixed(0)}M</b></div><div><small>주당 가치</small><b>$${ps.toFixed(2)}</b></div><div><small>현재가 대비</small><b class="${ps>=P.iova?'up':'down'}">${ps>=P.iova?'+':''}${((ps/P.iova-1)*100).toFixed(0)}%</b></div>`;
+}
+['b1','b2','b3'].forEach(i=>$('#'+i).oninput=calcI);
+const IQ={'보수':[520,5,250],'기본':[580,8,150],'낙관':[700,11,50]};
+$('#ioq').innerHTML=Object.keys(IQ).map(k=>`<button data-k="${k}">${k}</button>`).join('');
+[...$('#ioq').children].forEach(b=>b.onclick=()=>{IQ[b.dataset.k].forEach((v,i)=>$('#b'+(i+1)).value=v);calcI()});
+calcI();
+$('#ioimp').innerHTML=`<li><span class="i">1</span><span class="x">2026 가이던스 기준 EV/매출<small>중간값 $415M</small></span><span class="r">${(IO.ev/415).toFixed(1)}x</span></li>
+  <li><span class="i">2</span><span class="x">8배를 정당화하려면 필요한 매출<small>성장이 둔화되면 통상 받는 배수</small></span><span class="r">${fmtB(IO.ev/8)}</span></li>
+  <li><span class="i">3</span><span class="x">2Q 연환산 대비 필요한 성장<small>$397M 기준</small></span><span class="r">+${((IO.ev/8/397.2-1)*100).toFixed(0)}%</span></li>`;
+
+let start='overview';try{const s=localStorage.getItem('abiova-view');if(s&&$('#v-'+s))start=s}catch(e){}
+show(start);
+})();
+</script>
