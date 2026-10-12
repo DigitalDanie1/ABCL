@@ -2,11 +2,11 @@
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Geist:wght@400;500;600;700&family=Geist+Mono:wght@400;500&family=Noto+Sans+KR:wght@400;500;700&display=swap">
 <style>
-/* Layout: SaaS research console. Fixed left sidebar + dense card grid; small headers, thin segment bars, ranked lists, green/red deltas. ABCL teal, IOVA orange. */
+/* Layout: SaaS research console. Fixed left sidebar + dense card grid; price charts with event markers, thin segment bars, ranked lists, heatmaps. ABCL teal, IOVA orange, XBI grey. */
 :root{
   --bg:#f6f6f7; --panel:#ffffff; --side:#fbfbfb; --line:#e6e6e9; --line2:#f1f1f3;
   --fg:#17171b; --fg2:#53545c; --muted:#8b8c94; --chip:#f2f2f4;
-  --abcl:#0f9f8e; --iova:#e5780b; --up:#15a34a; --down:#dc2626; --warn:#c77700; --blue:#3866e0; --violet:#7c5cd6;
+  --abcl:#0f9f8e; --iova:#e5780b; --xbi:#8b8c94; --up:#15a34a; --down:#dc2626; --warn:#c77700; --blue:#3866e0; --violet:#7c5cd6;
   --tip-bg:#17171b; --tip-fg:#ffffff;
   --f:'Geist','Noto Sans KR',system-ui,-apple-system,sans-serif;
   --fm:'Geist Mono',ui-monospace,Menlo,monospace;
@@ -15,20 +15,20 @@
 @media (prefers-color-scheme: dark){:root:not([data-theme="light"]){
   --bg:#0e0f11; --panel:#16171a; --side:#121315; --line:#26272c; --line2:#1d1e22;
   --fg:#ececef; --fg2:#a8a9b1; --muted:#73747c; --chip:#212226;
-  --abcl:#2cc5b1; --iova:#ff9a3a; --up:#2fd06b; --down:#ff6b6b; --warn:#f2b33d; --blue:#7ea0ff; --violet:#a68cff;
+  --abcl:#2cc5b1; --iova:#ff9a3a; --xbi:#8a8b93; --up:#2fd06b; --down:#ff6b6b; --warn:#f2b33d; --blue:#7ea0ff; --violet:#a68cff;
   --tip-bg:#ececef; --tip-fg:#16171a;
   color-scheme:dark;}}
 :root[data-theme="dark"]{
   --bg:#0e0f11; --panel:#16171a; --side:#121315; --line:#26272c; --line2:#1d1e22;
   --fg:#ececef; --fg2:#a8a9b1; --muted:#73747c; --chip:#212226;
-  --abcl:#2cc5b1; --iova:#ff9a3a; --up:#2fd06b; --down:#ff6b6b; --warn:#f2b33d; --blue:#7ea0ff; --violet:#a68cff;
+  --abcl:#2cc5b1; --iova:#ff9a3a; --xbi:#8a8b93; --up:#2fd06b; --down:#ff6b6b; --warn:#f2b33d; --blue:#7ea0ff; --violet:#a68cff;
   --tip-bg:#ececef; --tip-fg:#16171a;
   color-scheme:dark;}
 *{box-sizing:border-box}
 html,body{height:100%}
 body{margin:0;background:var(--bg);color:var(--fg);font:400 13px/1.55 var(--f);padding-inline:0;padding-block:0}
 a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
-.mono,.n{font-family:var(--fm);font-variant-numeric:tabular-nums}
+.n{font-family:var(--fm);font-variant-numeric:tabular-nums}
 .app{display:grid;grid-template-columns:224px minmax(0,1fr);min-height:100%}
 .side{background:var(--side);border-right:1px solid var(--line);padding:16px 12px;position:sticky;top:0;height:100vh;overflow-y:auto;display:flex;flex-direction:column;gap:18px}
 .logo{display:flex;align-items:center;gap:8px;font-weight:700;font-size:15px;padding:2px 8px;white-space:nowrap;flex:none}
@@ -40,7 +40,7 @@ a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
 .nav button:focus-visible{outline:2px solid var(--blue);outline-offset:-2px}
 .nav svg{width:15px;height:15px;flex:none;stroke:currentColor;fill:none;stroke-width:1.7}
 .sgroup{font-size:11px;color:var(--muted);padding:0 10px;margin-bottom:4px;display:flex;justify-content:space-between}
-.tk{display:flex;justify-content:space-between;align-items:center;padding:6px 10px;border-radius:8px;font-size:12.5px}
+.tk{display:grid;grid-template-columns:1fr auto auto;gap:8px;align-items:center;padding:6px 10px;border-radius:8px;font-size:12.5px}
 .tk b{display:flex;align-items:center;gap:7px}
 .tk b::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
 .side .foot{margin-top:auto;font-size:11px;color:var(--muted);padding:0 10px}
@@ -55,11 +55,12 @@ a{color:var(--blue);text-decoration:none} a:hover{text-decoration:underline}
 .g4{grid-template-columns:repeat(4,minmax(0,1fr))}
 .g3{grid-template-columns:repeat(3,minmax(0,1fr))}
 .g2{grid-template-columns:repeat(2,minmax(0,1fr))}
-.s2{grid-column:span 2} .s3{grid-column:span 3}
+.s2{grid-column:span 2} .s3{grid-column:span 3} .sa{grid-column:1/-1}
 @media(max-width:1180px){.g4{grid-template-columns:repeat(2,minmax(0,1fr))}.g3{grid-template-columns:repeat(2,minmax(0,1fr))}.s3{grid-column:1/-1}}
 @media(max-width:700px){.g4,.g3,.g2{grid-template-columns:minmax(0,1fr)}.s2,.s3{grid-column:auto}}
+.mt{margin-top:12px}
 .card{background:var(--panel);border:1px solid var(--line);border-radius:12px;padding:14px 16px;min-width:0;display:flex;flex-direction:column;gap:10px}
-.ch{display:flex;justify-content:space-between;align-items:baseline;gap:10px}
+.ch{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
 .ch h3{font-size:13px;font-weight:600;margin:0}
 .ch .more{font-size:11.5px;color:var(--muted);white-space:nowrap}
 section[hidden]{display:none}
@@ -86,7 +87,7 @@ section[hidden]{display:none}
 .seg{display:flex;height:6px;border-radius:99px;overflow:hidden;gap:2px;background:var(--line2)}
 .seg i{display:block;height:100%;background:var(--c)}
 .hb{display:grid;gap:8px}
-.hbr{display:grid;grid-template-columns:120px minmax(0,1fr) 64px;gap:10px;align-items:center;font-size:12px}
+.hbr{display:grid;grid-template-columns:minmax(80px,120px) minmax(24px,1fr) 52px;gap:10px;align-items:center;font-size:12px}
 .hbr .lb{color:var(--fg2)}
 .hbr .tr{height:8px;background:var(--line2);border-radius:99px;position:relative}
 .hbr .tr i{position:absolute;top:0;bottom:0;left:0;border-radius:99px;background:var(--c)}
@@ -99,7 +100,7 @@ section[hidden]{display:none}
 .vb span{font:500 11.5px var(--fm)}
 .vlab{display:flex;gap:14px}.vlab span{flex:1;text-align:center;font-size:11px;color:var(--muted)}
 .wf{display:grid;gap:6px}
-.wfr{display:grid;grid-template-columns:150px minmax(0,1fr) 70px;gap:10px;align-items:center;font-size:12px}
+.wfr{display:grid;grid-template-columns:minmax(80px,128px) minmax(24px,1fr) 46px;gap:10px;align-items:center;font-size:12px}
 .wfr .tr{height:14px;position:relative}
 .wfr .tr i{position:absolute;top:0;bottom:0;border-radius:3px;background:var(--c)}
 .wfr .vv{font:500 12px var(--fm);text-align:right}
@@ -155,10 +156,46 @@ input[type=range]{width:100%;accent-color:var(--c,var(--fg))}
 @media(max-width:560px){.tli{grid-template-columns:80px 14px minmax(0,1fr)}.tli>:last-child{grid-column:3}}
 .quote{border-left:2px solid var(--c);padding:2px 0 2px 10px;color:var(--fg2);font-size:12.5px}
 .quote small{display:block;color:var(--muted);font-size:11px;margin-top:2px}
-.flt{display:flex;gap:6px;flex-wrap:wrap}
-.flt button{all:unset;font-size:12px;padding:4px 11px;border-radius:99px;background:var(--chip);color:var(--fg2);cursor:pointer}
-.flt button[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
-.flt button:focus-visible{outline:2px solid var(--blue)}
+.flt,.rng{display:flex;gap:4px;flex-wrap:wrap}
+.flt button,.rng button{all:unset;font-size:11.5px;padding:3px 10px;border-radius:99px;background:var(--chip);color:var(--fg2);cursor:pointer}
+.flt button[aria-pressed="true"],.rng button[aria-pressed="true"]{background:var(--fg);color:var(--panel)}
+.flt button:focus-visible,.rng button:focus-visible{outline:2px solid var(--blue)}
+/* charts */
+.chart{position:relative;width:100%;min-height:120px}
+.chart svg{display:block;width:100%;height:auto;overflow:visible}
+.chart text{font:400 10.5px var(--fm);fill:var(--muted)}
+.chart .gl{stroke:var(--line2);stroke-width:1}
+.chart .ax0{stroke:var(--line);stroke-width:1}
+.chart .hl{stroke:var(--fg2);stroke-width:1;stroke-dasharray:3 3}
+.ctip{position:absolute;pointer-events:none;background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:7px 9px;font-size:11.5px;box-shadow:0 8px 22px rgba(0,0,0,.12);white-space:nowrap;z-index:5;display:none}
+.ctip b{font-weight:600}
+.ctip .r{display:flex;gap:10px;justify-content:space-between;align-items:center}
+.ctip .r span:first-child::before{content:"";display:inline-block;width:7px;height:7px;border-radius:50%;background:var(--c);margin-right:6px}
+.ctip .ev{margin-top:4px;color:var(--fg2);max-width:220px;white-space:normal}
+.lg{display:flex;gap:14px;flex-wrap:wrap;font-size:12px;color:var(--fg2)}
+.lg span::before{content:"";display:inline-block;width:10px;height:3px;border-radius:2px;background:var(--c);margin-right:6px;vertical-align:middle}
+.evl{display:grid;grid-template-columns:repeat(auto-fill,minmax(210px,1fr));gap:4px 14px;font-size:11.5px;color:var(--fg2)}
+.evl div{display:flex;gap:7px;align-items:baseline}
+.evl i{font:600 10px var(--fm);font-style:normal;min-width:16px;height:16px;border-radius:50%;display:inline-grid;place-items:center;background:var(--c);color:#fff;flex:none}
+.evl small{color:var(--muted);font-family:var(--fm)}
+.dp{position:relative;height:74px;margin:6px 6px 0}
+.dp .ax{position:absolute;left:0;right:0;top:36px;height:2px;background:var(--line)}
+.dp .pt{position:absolute;top:30px;width:14px;height:14px;margin-left:-7px;border-radius:50%;background:var(--c);border:2px solid var(--panel)}
+.dp .lbl{position:absolute;font:500 10.5px var(--fm);color:var(--fg2);transform:translateX(-50%);white-space:nowrap}
+.dp .pr{position:absolute;top:18px;height:38px;width:2px;background:var(--fg);margin-left:-1px}
+.dp .mn{position:absolute;top:26px;height:22px;width:2px;background:var(--blue);margin-left:-1px}
+.hm{display:grid;gap:3px;font:500 11.5px var(--fm)}
+.hm div{padding:7px 4px;text-align:center;border-radius:5px}
+.hm .h{background:none;color:var(--muted);font-weight:400}
+.hm .cur{outline:2px solid var(--fg);outline-offset:-2px}
+.lane{display:grid;grid-template-columns:52px repeat(6,minmax(0,1fr));gap:4px;font-size:11px}
+.lane .hd{color:var(--muted);text-align:center;padding:4px 0;border-bottom:1px solid var(--line)}
+.lane .lb{font-weight:600;display:flex;align-items:center;gap:6px;padding-top:6px}
+.lane .lb::before{content:"";width:7px;height:7px;border-radius:50%;background:var(--c)}
+.lane .cellx{min-height:40px;border-left:1px dashed var(--line2);padding:4px 2px;display:flex;flex-direction:column;gap:3px}
+.lane .ev{background:color-mix(in srgb,var(--c) 14%,var(--panel));border-left:3px solid var(--c);border-radius:4px;padding:3px 6px;line-height:1.3;color:var(--fg)}
+.lane .ev.span{grid-row:auto}
+.lane .ev.u{border-left-style:dashed}
 @media(max-width:860px){
   .app{grid-template-columns:minmax(0,1fr)}
   .side{position:sticky;top:env(safe-area-inset-top,0px);height:auto;flex-direction:row;align-items:center;padding:8px 16px;z-index:20;border-right:0;border-bottom:1px solid var(--line);overflow-x:auto;gap:10px;scrollbar-width:none}
@@ -168,26 +205,86 @@ input[type=range]{width:100%;accent-color:var(--c,var(--fg))}
   .nav button{white-space:nowrap;padding:6px 9px}
   .nav svg{display:none}
   .main{padding:14px 16px 32px}
+  .lane{grid-template-columns:44px repeat(6,minmax(70px,1fr))}
+  .lanewrap{overflow-x:auto}
 }
+
+/* brand logos */
+.logo .kd{width:22px;height:22px;border-radius:6px;background:var(--fg);color:var(--panel);display:grid;place-items:center;font:700 10px var(--fm);letter-spacing:-.02em}
+.logo .nm{display:grid;line-height:1.1}
+.logo .nm small{font:500 10.5px var(--f);color:var(--muted)}
+.plates{display:flex;gap:10px;flex-wrap:wrap}
+.plate{display:inline-flex;align-items:center;gap:10px;background:#ffffff;border:1px solid var(--line);border-left:4px solid var(--c);border-radius:10px;padding:6px 12px 6px 10px;height:40px}
+.plate img{display:block;height:24px;width:auto}
+.plate .tkr{font:600 12px var(--fm);color:#fff;background:var(--c);padding:2px 7px;border-radius:5px;letter-spacing:.02em}
+.plate.sm{height:34px;padding:4px 10px 4px 8px}.plate.sm img{height:20px}
+.plate[style*="--abcl"] img{height:32px}.plate.sm[style*="--abcl"] img{height:26px}
+.tag[style*="--abcl"],.tag[style*="--iova"]{color:var(--c)}
+.tag[style*="--abcl"]::before,.tk[style*="--abcl"] b::before{width:14px;height:14px;border-radius:0;background:url("data:image/svg+xml,%3Csvg%20width%3D%2246%22%20height%3D%2241%22%20viewBox%3D%220%200%2046%2041%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M14.566%2031.2698L5.78406%2014.0746L9.72364%206.35559L34.1033%204.43388L40.9655%2011.0113L40.8762%2028.2745L34.7421%2036.1725L14.566%2031.2698ZM35.677%200L7.0009%202.26167L0.970215%2014.0746L11.6506%2034.9808L36.4228%2041L45.1513%2029.7596L45.2583%209.18626L35.677%200Z%22%20fill%3D%22%2307D897%22/%3E%0A%3C/svg%3E") center/contain no-repeat}
+.tag[style*="--iova"]::before,.tk[style*="--iova"] b::before{width:14px;height:14px;border-radius:0;background:url("data:image/png;base64,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") center/contain no-repeat}
+.tk[style*="--abcl"] b,.tk[style*="--iova"] b{color:var(--c)}
+
+/* business view */
+.def{font-size:15px;line-height:1.6;color:var(--fg)}
+.def b{color:var(--c,var(--fg))}
+.card .def b{font-weight:600}
+.facts{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
+.facts div{background:var(--chip);border-radius:8px;padding:8px 10px;min-width:0}
+.facts small{display:block;font-size:11px;color:var(--muted)}
+.facts b{font-size:13px;font-weight:600}
+@media(max-width:560px){.facts{grid-template-columns:minmax(0,1fr)}}
+.flow{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:22px}
+.st{position:relative;border:1px solid var(--line);border-top:3px solid var(--c);border-radius:10px;padding:12px 12px 10px;display:grid;gap:4px;align-content:start;min-width:0;background:var(--panel)}
+.st:not(:last-child)::after{content:"";position:absolute;right:-17px;top:50%;width:12px;height:12px;border-top:2px solid var(--muted);border-right:2px solid var(--muted);transform:translateY(-50%) rotate(45deg)}
+.st .sn{width:20px;height:20px;border-radius:50%;background:var(--c);color:#fff;font:600 11px var(--fm);display:grid;place-items:center}
+.st b{font-size:13px;font-weight:600}
+.st p{font-size:12px;color:var(--fg2)}
+.st small{font-size:11px;color:var(--muted)}
+@media(max-width:900px){.flow{grid-template-columns:minmax(0,1fr);gap:18px}.st:not(:last-child)::after{right:auto;left:50%;top:auto;bottom:-14px;transform:translateX(-50%) rotate(135deg)}}
+.kv{display:grid}
+.kv div{display:grid;grid-template-columns:76px minmax(0,1fr);gap:10px;padding:7px 0;border-top:1px solid var(--line2);font-size:12.5px}
+.kv div:first-child{border-top:0}
+.kv span{color:var(--muted)}
+.kv b{font-weight:500}
+.mf{display:grid;gap:8px}
+.mrow{display:grid;grid-template-columns:minmax(70px,110px) minmax(0,1fr) minmax(56px,90px);gap:8px;align-items:center;font-size:12px}
+.mrow .who{background:var(--chip);border-radius:6px;padding:5px 8px;text-align:center;font-weight:600}
+.mrow .arr{position:relative;display:grid;place-items:center;min-height:30px}
+.mrow .arr i{position:absolute;left:0;right:8px;top:50%;height:2px;background:var(--c)}
+.mrow .arr::after{content:"";position:absolute;right:0;top:50%;border:6px solid transparent;border-left:8px solid var(--c);transform:translateY(-50%)}
+.mrow .arr em{position:relative;font-style:normal;background:var(--panel);padding:0 6px;color:var(--fg2);text-align:center;font-size:11.5px}
+table.cmp td:first-child{color:var(--muted);white-space:nowrap}
+
+/* swot */
+.swg{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+@media(max-width:560px){.swg{grid-template-columns:minmax(0,1fr)}}
+.swq{border-radius:10px;padding:10px 12px;background:color-mix(in srgb,var(--q) 7%,var(--panel));border:1px solid color-mix(in srgb,var(--q) 25%,var(--line));min-width:0}
+.swh{display:flex;align-items:baseline;gap:8px;margin-bottom:6px}
+.swl{width:22px;height:22px;border-radius:6px;background:var(--q);color:#fff;font:700 12px var(--fm);display:grid;place-items:center;align-self:center}
+.swh b{font-size:13px}.swh small{font-size:11px;color:var(--muted)}
+.swq ol{margin:0;padding:0;list-style:none;display:grid;gap:6px}
+.swq li{font-size:12.5px;line-height:1.4}
+.swq li small{display:block;color:var(--fg2);font-size:11.5px;margin-top:1px}
 </style>
 
 <div class="app">
 <aside class="side">
-  <div class="logo"><i></i>Biotech Desk</div>
+  <div class="logo"><span class="kd">KD</span><span class="nm">Biotech Desk<small>KoreanDaniel</small></span></div>
   <nav class="nav" id="nav"></nav>
   <div class="grp">
-    <div class="sgroup"><span>워치리스트</span><span>9/30 종가</span></div>
-    <div class="tk" style="--c:var(--abcl)"><b>ABCL</b><span class="n">$14.59</span></div>
-    <div class="tk" style="--c:var(--iova)"><b>IOVA</b><span class="n">$14.82</span></div>
+    <div class="sgroup"><span>워치리스트</span><span id="wlDate"></span></div>
+    <div class="tk" style="--c:var(--abcl)"><b>ABCL</b><span class="n" id="wlA"></span><span id="wlAd"></span></div>
+    <div class="tk" style="--c:var(--iova)"><b>IOVA</b><span class="n" id="wlI"></span><span id="wlId"></span></div>
+    <div class="tk" style="--c:var(--xbi)"><b>XBI</b><span class="n" id="wlX"></span><span id="wlXd"></span></div>
   </div>
-  <div class="foot">KoreanDaniel · 투자 조언 아님<br>점선 밑줄 용어에 마우스를 올리면 설명</div>
+  <div class="foot">투자 조언 아님<br>점선 밑줄 용어에 마우스를 올리면 설명<br>증감은 9/30 종가 대비</div>
 </aside>
 
 <main class="main">
   <div class="top">
     <h1>ABCL × IOVA 리서치</h1>
-    <span class="asof">2026-09-30 종가 · 2Q26 10-Q · 2026-10-01 작성</span>
-    <span class="sp"></span>
+    <span class="asof" id="asof"></span>
+    <div class="plates"><a class="plate" style="--c:var(--abcl)" href="https://www.abcellera.com/" target="_blank" rel="noopener" aria-label="AbCellera"><img src="data:image/svg+xml,%3Csvg%20width%3D%22189%22%20height%3D%2282%22%20viewBox%3D%220%200%20189%2082%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M27.3217%2062.5396L9.67376%2028.1493L17.5906%2012.7112L66.5833%208.86777L80.3732%2022.0227L80.1939%2056.549L67.8669%2072.3449L27.3217%2062.5396ZM69.7457%200L12.1191%204.52335L0%2028.1493L21.463%2069.9616L71.2445%2082L88.7849%2059.5192L89%2018.3725L69.7457%200Z%22%20fill%3D%22%2307D897%22/%3E%0A%3Cpath%20d%3D%22M184.847%2046.0694C184.364%2046.473%20181.755%2048.5478%20179.318%2048.5478C177.562%2048.5478%20176.667%2047.5281%20176.667%2045.5242C176.667%2043.3928%20177.569%2042.3094%20179.353%2042.3094H184.847V46.0694ZM181.236%2031.4046C178.06%2031.4046%20174.421%2032.2048%20174.385%2032.2118L174.186%2032.2543L174.499%2035.3063L174.748%2035.2638C174.783%2035.2638%20178.486%2034.5769%20181.272%2034.5769C183.617%2034.5769%20184.847%2036.3259%20184.847%2038.0608V39.13H179.197C175.558%2039.13%20173.205%2041.6509%20173.205%2045.5596C173.205%2049.4683%20175.558%2051.7626%20179.197%2051.7626C181.599%2051.7626%20184.065%2050.3889%20184.925%2049.8578L185.096%2051.3802H188.258V37.8342C188.258%2033.9254%20185.501%2031.4046%20181.229%2031.4046M164.84%2033.8263L164.741%2031.787H161.485V51.3802H164.947V37.7209C165.302%2037.2819%20167.626%2034.5769%20170.746%2034.5769H170.974V31.3975H170.739C167.797%2031.4329%20165.665%2033.0686%20164.84%2033.8192M145.231%2039.7815C145.231%2039.3708%20145.238%2038.521%20145.267%2038.0749C145.388%2035.9506%20146.958%2034.5769%20149.261%2034.5769C151.329%2034.5769%20152.95%2036.0781%20153.028%2038.0749C153.056%2038.521%20153.063%2039.3708%20153.063%2039.7815H145.231ZM149.183%2031.3975C145.011%2031.3975%20141.976%2034.0387%20141.806%2037.8483C141.77%2039.1229%20141.727%2040.3196%20141.727%2041.5801C141.727%2042.8405%20141.763%2044.0088%20141.806%2045.3401C141.976%2049.2417%20144.876%2051.7626%20149.183%2051.7626C153.49%2051.7626%20155.707%2050.8633%20155.8%2050.8279L155.97%2050.7571L155.522%2047.7618L155.274%2047.8255C155.274%2047.8255%20152.189%2048.5832%20149.147%2048.5832C146.574%2048.5832%20145.331%2046.7705%20145.267%2045.0922C145.238%2044.4833%20145.231%2043.4282%20145.231%2042.9609H156.482V37.8342C156.482%2034.1096%20153.412%2031.4046%20149.183%2031.4046M133.391%2051.3873H136.809V24.1324H133.391V51.3873ZM123.938%2051.3873H127.356V24.1324H123.938V51.3873ZM107.954%2039.7886C107.954%2039.3779%20107.961%2038.5281%20107.989%2038.082C108.11%2035.9577%20109.681%2034.584%20111.984%2034.584C114.052%2034.584%20115.672%2036.0852%20115.75%2038.082C115.779%2038.5281%20115.786%2039.3779%20115.786%2039.7886H107.954ZM111.912%2031.4046C107.74%2031.4046%20104.706%2034.0458%20104.535%2037.8554C104.5%2039.13%20104.457%2040.3267%20104.457%2041.5871C104.457%2042.8476%20104.492%2044.0159%20104.535%2045.3472C104.706%2049.2488%20107.605%2051.7697%20111.912%2051.7697C116.219%2051.7697%20118.437%2050.8704%20118.529%2050.835L118.7%2050.7642L118.252%2047.7689L118.003%2047.8326C118.003%2047.8326%20114.919%2048.5903%20111.877%2048.5903C109.304%2048.5903%20108.06%2046.7775%20107.996%2045.0993C107.968%2044.4904%20107.961%2043.4353%20107.961%2042.9679H119.219V37.8413C119.219%2034.1166%20116.148%2031.4117%20111.92%2031.4117M100.122%2047.5635C100.079%2047.5706%2095.58%2048.3283%2093.3626%2048.3283C90.413%2048.3283%2087.2006%2046.6005%2087.1011%2042.8122C87.0229%2039.4628%2087.0229%2036.0639%2087.1011%2032.7217C87.165%2030.0663%2089.1551%2027.2055%2093.3626%2027.2055C95.6582%2027.2055%2099.887%2027.9207%2099.9296%2027.9278L100.185%2027.9703L100.321%2024.6918L100.136%2024.6493C100.136%2024.6493%2096.575%2023.7642%2093.3554%2023.7642C87.6696%2023.7642%2083.4551%2027.5313%2083.3271%2032.7146C83.2489%2036.071%2083.2489%2039.4699%2083.3271%2042.8263C83.4551%2048.0096%2087.6696%2051.7767%2093.3554%2051.7767C96.4613%2051.7767%20100.285%2050.8633%20100.328%2050.8491L100.512%2050.8066L100.377%2047.5281L100.122%2047.5706V47.5635ZM74.2299%2045.0993C74.1659%2046.7067%2073.1211%2048.5903%2070.3919%2048.5903C67.9328%2048.5903%2066.355%2048.2929%2065.8575%2048.1796V36.2126C66.4261%2035.9152%2068.9136%2034.6973%2071.0458%2034.6973C73.8816%2034.6973%2074.2014%2037.2819%2074.237%2038.0749C74.3151%2040.4046%2074.3151%2042.7697%2074.237%2045.0993M71.124%2031.5179C68.8497%2031.5179%2066.682%2032.4384%2065.8646%2032.8279V24.1324H62.446V50.7571L62.6166%2050.7996C62.6522%2050.8066%2066.419%2051.7626%2070.3919%2051.7626C74.8269%2051.7626%2077.556%2049.3621%2077.6911%2045.3401C77.7693%2042.8476%2077.7693%2040.3196%2077.6911%2037.82C77.556%2033.8688%2075.104%2031.5108%2071.124%2031.5108M43.2352%2040.2771L47.1655%2027.6092L51.0958%2040.2771H43.2352ZM44.5998%2024.1253L36%2051.3802H39.8663L42.2473%2043.6123H52.1263L54.5073%2051.3802H58.4162L49.7383%2024.1253H44.5998Z%22%20fill%3D%22%230d1b2a%22/%3E%0A%3C/svg%3E" alt="AbCellera"><span class="tkr">ABCL</span></a><a class="plate" style="--c:var(--iova)" href="https://www.iovance.com/" target="_blank" rel="noopener" aria-label="Iovance"><img src="data:image/png;base64,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" alt="Iovance Biotherapeutics"><span class="tkr">IOVA</span></a></div><span class="sp"></span>
     <div class="pillset"><span><b class="b ok">확인</b> 공시·IR</span><span><b class="b rep">보도</b> 언론·집계</span><span><b class="b est">추정</b> 제 계산</span><span><b class="b clm">주장</b> 제3자</span><span><b class="b mem">기억</b> 재확인 필요</span></div>
   </div>
   <div id="views"></div>
@@ -195,6 +292,7 @@ input[type=range]{width:100%;accent-color:var(--c,var(--fg))}
 </div>
 
 <script>
+const PX={"ABCL":{"c":[2.57,2.49,2.5,2.59,2.52,2.56,2.62,2.68,2.87,2.77,2.84,2.78,2.7,2.72,2.89,2.83,2.78,2.73,2.73,2.89,2.72,2.76,2.72,2.7,3.15,2.96,2.92,2.76,2.65,2.65,2.71,2.67,2.72,2.76,2.95,2.83,3.0,3.01,3.03,2.91,2.9,2.85,3.0,2.95,3.02,2.91,2.95,2.81,2.86,2.79,2.69,2.71,2.85,2.92,2.95,3.03,2.99,2.82,2.93,3.03,3.13,3.31,3.28,3.03,2.92,3.0,2.77,2.96,2.94,2.97,3.06,3.53,3.52,3.48,3.36,3.3,3.2,3.23,3.17,3.08,3.21,3.38,3.29,3.1,3.02,2.95,3.1,3.14,3.27,3.43,3.47,3.14,3.03,2.99,2.82,2.92,2.92,2.59,2.36,2.34,2.39,2.38,2.33,2.2,2.23,2.35,2.4,2.52,2.54,2.35,2.39,2.38,2.44,2.59,2.53,2.42,2.36,2.31,2.23,2.09,2.22,2.09,2.09,2.05,1.93,2.17,2.07,2.4,2.44,2.43,2.39,2.42,2.45,2.52,2.53,2.6,2.57,2.59,2.55,2.61,2.49,2.41,2.19,2.03,2.01,2.01,2.03,2.06,2.1,2.05,2.02,2.03,2.02,2.09,1.99,2.0,1.97,1.98,2.04,2.04,2.02,2.14,2.31,2.42,2.37,2.44,2.51,3.02,3.23,3.15,3.2,3.16,3.12,3.47,3.41,3.33,3.68,3.8,3.74,3.61,3.43,3.49,3.75,3.8,4.03,3.89,4.22,4.25,4.01,4.24,3.94,4.06,3.9,4.48,5.15,4.92,4.99,5.02,5.11,4.92,4.69,4.57,4.47,4.24,4.34,4.36,4.12,4.24,4.25,4.5,4.27,4.58,4.5,4.59,4.67,4.29,4.17,4.3,4.39,4.23,4.37,4.35,4.3,4.18,4.05,3.99,4.16,4.22,4.17,4.24,4.28,4.61,4.47,4.35,4.77,4.57,4.72,4.51,4.83,4.9,4.77,4.65,4.74,4.87,5.03,5.96,5.98,5.9,5.87,5.77,6.17,5.91,5.53,5.67,5.62,6.1,5.84,5.59,5.86,5.58,5.47,5.71,5.66,5.77,5.63,5.62,5.36,5.55,5.37,4.87,4.69,4.53,3.91,4.03,4.01,3.97,3.62,3.69,3.6,3.66,3.61,3.41,3.51,3.57,3.62,3.64,3.73,3.47,3.46,3.49,3.65,3.56,3.59,3.68,3.77,3.74,3.62,3.51,3.46,3.35,3.53,3.6,3.72,3.69,3.72,3.58,3.46,3.45,3.42,3.43,3.43,3.9,4.13,4.11,4.37,4.52,4.27,4.29,4.18,4.12,4.16,4.28,4.64,4.24,4.14,3.99,3.9,3.86,3.62,3.5,3.52,3.27,2.78,3.16,3.22,3.16,3.13,2.94,3.1,3.17,3.13,3.22,3.04,3.03,3.22,3.19,3.59,3.61,3.82,3.71,3.63,3.59,3.45,3.52,3.57,3.65,3.47,3.49,3.56,3.55,3.52,3.53,3.4,3.37,3.31,3.39,3.35,3.27,3.28,3.49,3.51,3.52,3.39,3.3,3.43,3.44,3.54,3.66,3.76,3.86,3.83,4.01,3.91,3.99,4.08,4.05,4.15,4.16,4.16,3.82,4.15,4.43,4.59,4.66,5.04,4.82,5.24,5.25,4.95,4.77,4.4,4.09,4.16,4.05,4.57,5.14,5.2,5.29,5.44,5.73,6.17,6.46,6.13,5.72,6.37,5.62,5.42,5.3,5.09,5.27,5.24,5.26,5.09,5.44,5.53,5.74,5.63,6.03,6.66,7.38,8.12,7.85,7.6,8.11,7.87,7.69,7.1,7.29,6.8,6.52,6.74,6.74,6.16,6.47,5.8,5.97,5.73,5.67,5.31,5.25,5.29,5.39,5.69,5.71,5.83,6.09,5.92,6.53,6.93,9.34,9.76,10.35,10.97,11.38,11.2,11.12,12.01,11.57,11.32,10.61,12.5,12.24,12.4,11.35,11.48,11.28,11.36,11.57,11.43,11.44,11.05,10.46,10.89,11.17,11.41,11.67,12.73,12.63,12.66,12.65,12.31,12.65,12.7,13.92,14.82,14.59,13.91,13.74,13.78,13.15,12.83],"v":[1.3,1.1,1.7,1.7,2.0,1.8,1.2,2.3,3.2,2.1,1.2,1.1,3.3,2.3,2.9,1.2,1.2,1.0,1.2,3.6,3.8,1.7,2.3,2.2,7.6,4.0,2.7,2.8,3.3,2.5,1.8,1.7,1.4,1.8,2.5,1.8,4.3,2.4,2.8,1.9,1.7,2.5,2.4,2.7,2.3,2.2,3.7,3.2,2.9,2.1,4.5,2.4,2.1,2.1,1.6,3.0,3.4,3.3,1.9,2.6,2.6,4.6,4.0,3.6,3.4,4.1,5.7,4.4,3.0,1.6,3.7,11.0,3.9,4.5,4.1,3.0,4.1,2.2,3.1,4.5,2.3,4.4,2.6,3.5,3.3,3.2,3.0,4.2,6.0,8.0,5.6,3.4,2.4,5.6,5.6,3.2,5.4,9.9,3.7,5.0,4.4,4.6,4.3,5.6,6.1,2.7,3.2,4.4,4.1,3.4,3.7,3.3,3.8,2.7,4.1,3.0,2.8,2.5,3.4,4.3,4.1,3.1,4.8,6.3,4.1,5.4,4.9,5.4,4.2,5.8,4.4,3.0,4.4,3.3,4.4,3.8,3.0,4.3,3.4,2.7,3.5,3.3,4.2,5.1,3.2,6.0,4.0,4.4,17.0,6.6,3.1,3.4,2.3,3.9,2.3,2.4,1.7,2.1,2.5,1.6,2.1,4.0,5.0,4.1,4.1,3.8,4.6,18.8,20.1,8.0,7.1,7.3,7.4,8.7,8.8,5.3,8.1,9.9,4.8,6.2,8.5,7.5,8.7,2.0,7.4,5.2,7.0,4.3,5.6,8.1,6.8,7.1,5.8,11.6,18.4,7.3,4.7,5.7,5.2,4.1,6.2,3.8,4.7,6.7,3.6,2.8,4.5,8.6,13.3,7.7,5.0,5.6,6.4,4.4,3.7,5.2,5.9,4.1,4.1,2.6,3.3,2.2,2.5,3.6,3.6,4.2,7.2,4.2,2.8,3.1,3.6,4.6,3.0,3.1,5.2,4.8,3.8,6.0,5.7,10.2,6.6,3.4,3.8,3.7,4.5,13.9,9.8,9.1,6.6,5.8,10.2,5.6,7.5,4.3,4.7,6.1,5.6,4.6,4.0,4.3,4.6,3.0,4.7,3.9,2.8,3.9,3.9,3.2,2.9,4.5,6.0,7.0,13.5,7.2,4.5,2.9,7.1,4.3,4.6,3.4,2.8,4.1,3.5,5.9,3.7,9.3,4.4,3.9,3.3,3.4,3.7,2.3,2.5,1.9,3.2,2.5,2.6,3.2,2.4,3.9,4.6,3.8,3.4,2.7,1.7,2.6,2.7,2.3,7.7,4.8,3.7,6.4,5.8,4.8,6.5,5.1,7.0,4.1,5.3,5.4,3.9,3.9,7.0,5.8,4.4,3.2,3.0,2.4,4.3,6.1,4.7,6.6,11.1,5.4,3.3,1.9,3.7,3.8,2.7,2.9,1.7,2.0,4.7,2.6,5.6,6.0,6.6,5.4,5.1,4.6,3.2,2.3,4.3,2.0,2.2,1.6,5.1,2.1,1.9,2.5,1.5,2.4,2.5,2.4,2.1,1.7,1.8,2.4,2.8,3.0,1.7,3.5,3.2,4.0,2.5,2.0,2.4,2.9,3.2,3.0,2.9,4.8,5.2,3.9,5.3,8.2,9.4,11.9,12.8,12.1,6.0,6.7,10.0,13.4,7.7,11.6,10.8,13.4,16.9,6.0,7.4,8.9,11.1,4.6,8.5,14.0,6.5,8.7,6.5,7.7,9.3,9.7,8.1,7.1,11.4,8.9,4.8,5.7,3.8,4.2,2.9,3.7,3.6,5.6,6.8,5.5,5.5,13.4,12.0,15.6,16.2,7.8,8.0,8.4,6.3,8.1,9.4,5.9,7.3,4.1,4.3,3.8,7.5,4.2,6.4,5.1,2.6,2.9,6.3,4.2,6.1,6.1,4.3,5.0,3.4,4.0,4.6,8.4,6.8,46.0,18.4,14.9,20.1,12.4,7.8,8.2,10.8,6.2,4.6,6.6,10.7,5.0,4.3,5.9,5.0,4.2,3.7,3.3,2.0,2.6,2.4,4.9,4.4,4.4,3.7,4.5,8.0,5.4,4.4,4.3,3.8,5.0,3.4,7.8,9.1,4.9,7.8,3.7,4.1,9.8,5.0]},"IOVA":{"c":[9.72,9.61,9.47,9.74,9.77,9.59,9.37,10.17,10.24,9.92,9.96,9.82,10.56,10.67,11.03,10.81,11.04,10.44,11.19,11.44,11.66,12.14,12.28,10.59,10.65,9.69,9.0,8.59,8.18,8.43,8.19,8.14,8.24,8.55,9.27,9.12,9.4,9.32,9.07,8.73,8.73,8.47,9.03,8.94,8.59,8.58,7.96,7.83,7.84,7.81,7.26,7.22,7.38,7.46,7.49,7.6,7.37,7.17,7.4,7.79,7.65,7.48,7.4,7.17,6.4,5.78,5.89,5.91,5.76,5.91,5.88,5.99,6.19,6.25,6.25,6.19,6.07,6.21,5.85,5.64,5.81,6.1,5.88,5.69,5.32,5.29,5.34,5.34,5.57,5.56,5.65,5.61,5.78,5.55,5.34,5.35,5.26,4.24,4.04,3.92,4.05,3.75,3.75,3.73,3.9,3.82,3.52,3.59,3.74,3.57,3.56,3.54,3.54,3.63,3.48,3.44,3.63,3.56,3.33,3.25,3.54,3.25,3.0,3.03,2.85,3.27,3.06,3.3,3.41,3.23,3.07,3.06,3.08,3.21,3.19,3.36,3.51,3.61,3.56,3.59,3.33,3.5,3.5,3.1,3.13,3.17,1.75,1.93,1.79,1.71,1.76,1.66,1.83,1.91,1.76,1.75,1.78,1.73,1.75,1.83,1.75,1.76,1.82,1.83,1.8,2.05,2.21,2.38,2.24,2.31,2.24,2.08,2.02,2.04,1.98,1.85,1.88,1.78,1.74,1.69,1.72,1.74,1.75,1.75,1.7,1.77,1.99,1.93,1.87,2.01,1.94,2.23,2.34,2.23,2.49,3.13,3.97,3.29,3.13,2.95,2.92,2.67,2.57,2.68,2.83,2.75,2.58,2.64,2.11,1.97,2.23,2.45,2.45,2.55,2.5,2.6,2.53,2.54,2.69,2.53,2.45,2.42,2.23,2.23,2.19,2.21,2.2,2.49,2.38,2.37,2.38,2.42,2.27,2.27,2.3,2.22,2.2,2.05,2.12,2.07,2.12,2.02,2.11,2.23,2.17,2.21,2.25,2.34,2.21,2.18,2.27,2.19,2.1,2.14,2.12,2.24,2.24,2.18,2.32,2.27,2.15,2.19,2.25,2.31,2.19,2.0,1.95,1.97,1.95,1.82,1.81,2.31,2.3,2.37,2.65,2.54,2.41,2.47,2.42,2.44,2.26,2.18,2.24,2.5,2.48,2.44,2.47,2.23,2.14,2.21,2.2,2.2,2.31,2.25,2.26,2.25,2.2,2.16,2.25,2.52,2.46,2.48,2.78,2.82,2.87,2.85,2.79,2.77,2.73,2.52,2.45,2.55,2.77,2.61,2.45,2.4,2.35,2.38,2.22,2.36,2.44,2.51,2.69,2.64,2.89,2.98,2.75,2.63,2.55,2.61,2.64,2.44,2.36,2.53,2.6,2.6,2.6,2.52,2.57,2.62,2.72,2.85,2.87,2.89,3.78,3.83,3.79,3.86,3.79,3.75,4.26,4.58,5.13,5.41,5.2,4.84,4.07,3.96,4.04,3.89,3.77,3.87,3.69,3.63,3.62,3.75,3.69,3.51,3.32,3.51,3.45,3.43,3.3,3.32,3.47,4.01,3.7,3.46,3.64,3.82,3.8,3.86,3.78,3.7,3.53,3.48,3.44,3.43,3.38,3.31,3.36,3.4,3.85,3.98,4.09,3.55,3.62,3.7,3.56,3.66,3.52,3.45,3.39,3.46,3.54,3.7,4.11,4.1,4.37,4.3,4.1,3.96,4.1,3.79,4.38,4.23,4.0,3.88,3.78,3.96,4.08,4.03,3.82,3.93,3.91,4.06,4.44,4.25,4.21,4.25,4.21,4.16,3.97,4.31,4.19,4.35,4.28,4.37,4.23,4.04,3.93,4.74,4.66,5.0,5.02,5.48,5.17,5.13,4.99,4.9,4.7,4.56,4.69,4.07,4.32,4.36,4.34,6.21,6.34,6.4,6.49,6.74,6.52,6.98,7.1,7.03,7.99,8.99,8.29,8.06,8.44,8.08,8.26,8.01,8.17,8.28,8.62,8.7,8.79,8.7,8.43,8.14,8.6,9.26,9.36,9.87,10.02,10.25,10.19,10.64,10.19,10.8,11.0,10.99,14.45,14.82,14.23,14.22,14.15,12.96,12.92],"v":[3.6,3.8,4.6,3.4,3.5,3.9,4.8,7.6,8.9,4.7,2.1,3.4,5.3,8.7,5.7,3.4,3.7,4.6,5.3,5.9,4.9,9.8,9.4,27.3,8.6,9.4,9.3,6.9,17.4,13.4,11.6,6.0,4.4,9.3,10.0,5.4,5.7,2.9,4.7,4.6,3.5,3.7,3.9,3.2,4.9,4.7,6.9,5.5,5.2,4.3,7.1,9.7,11.2,7.3,3.5,6.2,7.4,9.8,7.6,7.5,7.6,5.9,7.9,8.0,18.5,16.8,15.6,9.1,9.5,6.6,11.5,8.4,7.9,6.0,8.1,5.7,9.3,6.4,9.1,9.3,5.4,6.1,5.4,6.1,11.2,9.5,5.6,7.8,8.2,5.6,6.6,7.0,10.9,8.5,7.9,6.9,14.0,49.9,18.8,18.6,11.2,9.9,10.0,8.2,8.0,7.7,10.4,8.3,9.2,6.3,10.1,6.1,7.6,6.7,6.3,10.5,7.4,8.3,10.7,9.1,7.5,10.8,13.9,15.4,9.7,17.8,12.1,7.5,9.7,6.7,8.1,9.6,9.6,9.0,7.1,5.7,14.8,6.5,6.3,7.1,10.9,9.7,8.4,12.9,8.2,26.7,112.4,37.6,26.8,14.5,14.3,19.5,15.2,15.8,11.9,6.3,7.9,16.1,13.1,8.8,7.7,9.0,9.9,5.7,6.8,20.6,18.2,21.0,17.2,13.5,8.8,12.6,7.9,8.4,11.2,9.1,9.7,11.0,12.3,17.5,7.3,9.3,6.8,4.6,11.1,10.6,18.8,13.6,6.8,19.5,37.2,24.7,24.9,14.7,22.4,49.4,110.3,43.5,24.9,22.2,15.7,19.0,13.6,16.7,12.6,8.2,11.6,28.4,43.4,15.4,16.3,15.2,11.3,9.4,9.1,34.6,10.1,12.6,11.2,12.5,8.3,9.1,11.0,7.0,8.7,7.3,7.4,15.2,11.2,9.8,11.2,8.0,8.5,6.3,9.1,9.1,11.3,23.1,9.1,7.2,7.1,10.0,10.2,9.5,6.6,6.8,9.2,8.7,15.7,11.9,15.2,11.0,14.3,8.1,10.4,14.3,11.6,9.3,21.0,15.0,13.7,7.6,9.3,9.7,10.2,24.5,12.5,10.9,51.0,16.1,17.7,83.7,29.6,24.1,26.8,14.8,11.3,16.0,17.8,11.0,9.9,8.6,8.1,16.0,9.5,6.7,3.4,11.8,7.8,7.9,8.7,6.6,14.1,7.0,7.3,13.9,10.6,9.5,14.2,23.3,10.3,30.0,14.2,12.0,7.7,8.1,8.9,9.0,11.2,15.1,14.1,8.9,13.7,10.8,9.9,11.5,10.7,7.6,14.3,23.4,14.0,12.1,13.7,12.1,18.1,15.6,11.4,10.7,9.1,11.1,10.0,12.3,15.8,6.9,6.9,8.5,7.0,5.8,6.4,6.6,7.1,8.7,9.2,12.0,69.7,46.2,22.5,19.1,13.0,14.0,24.7,23.7,44.6,27.6,19.8,20.8,26.4,19.4,14.7,9.7,14.5,10.5,23.5,9.0,11.9,10.6,7.5,8.5,9.9,11.0,9.3,7.8,9.8,9.7,15.6,26.7,44.6,17.9,13.9,12.2,11.0,10.7,9.8,11.0,22.2,15.3,11.7,10.3,11.3,8.9,16.3,9.9,22.6,18.4,17.1,41.0,20.7,19.0,21.0,7.9,12.6,7.9,10.2,8.6,8.9,10.6,23.1,14.6,12.8,9.3,17.3,14.5,12.7,9.7,22.6,19.7,11.3,11.3,8.9,11.5,11.0,12.7,9.0,11.2,23.7,11.6,18.0,15.6,9.0,23.7,10.7,10.3,21.4,20.5,12.8,11.6,10.3,13.7,9.9,13.3,13.4,43.7,28.2,23.5,16.4,20.4,14.2,9.7,9.4,13.2,13.4,10.8,14.2,20.0,13.0,10.7,15.6,73.4,31.0,17.3,10.4,13.5,15.7,17.5,14.8,10.5,24.2,43.8,27.8,15.7,11.9,10.1,7.4,7.7,12.1,6.8,12.4,14.6,8.1,9.5,11.9,10.6,12.4,21.0,11.1,19.7,24.2,22.9,13.1,16.1,15.9,11.9,12.6,12.2,78.2,29.3,16.0,11.9,11.8,19.0,14.5]},"XBI":{"c":[97.1,96.31,96.22,98.68,99.07,99.31,100.25,99.3,99.83,98.15,98.27,96.67,97.25,97.15,98.49,98.56,98.42,97.03,99.27,99.22,100.62,102.44,103.01,104.18,103.53,100.51,100.01,96.96,91.83,91.96,93.17,94.01,94.3,96.24,97.63,98.85,100.0,99.62,99.31,97.69,98.79,97.33,99.14,98.24,97.42,96.97,94.2,93.4,94.76,94.59,89.93,89.81,91.28,91.89,91.98,92.65,91.35,89.89,90.06,91.53,92.41,92.21,92.87,92.31,89.44,89.13,86.66,88.55,87.89,87.97,90.51,91.21,92.98,92.46,92.61,93.18,92.58,93.54,92.67,91.42,92.57,94.7,93.37,91.24,90.34,89.05,89.97,90.77,91.41,91.33,92.53,92.72,91.7,90.11,88.69,88.25,87.1,88.71,85.6,86.13,87.82,87.06,87.3,86.24,86.17,87.15,85.97,87.13,88.29,86.17,87.46,86.59,87.12,88.82,87.08,85.08,85.53,84.4,81.1,78.16,80.59,78.14,73.66,72.99,69.8,74.88,71.61,74.33,76.54,76.54,75.13,75.93,75.51,77.64,79.1,80.89,80.25,81.37,81.88,82.95,82.5,83.5,82.65,77.17,77.35,78.04,76.39,79.45,77.55,76.37,77.58,79.02,79.72,81.4,79.33,79.25,79.04,79.3,78.77,80.46,79.19,81.24,82.34,82.48,82.56,84.26,84.27,85.28,84.37,84.36,83.6,83.37,82.1,82.66,82.38,82.27,83.82,83.27,83.68,83.01,82.93,83.08,84.79,85.24,83.58,84.71,87.87,88.38,87.02,88.27,85.91,87.82,88.12,86.27,85.87,86.73,88.22,87.49,87.61,86.57,85.84,86.24,85.66,85.93,86.82,86.85,86.13,85.32,85.43,85.16,86.92,89.52,89.57,90.68,90.21,88.8,89.22,89.92,90.92,88.79,89.9,90.29,90.29,89.85,92.88,93.65,93.47,95.47,94.43,94.98,93.9,95.7,94.12,93.43,93.74,93.77,96.68,95.6,97.3,96.77,97.44,95.86,97.95,99.4,100.2,101.39,102.59,103.6,103.64,103.68,105.44,106.52,104.99,105.27,105.12,108.37,107.91,107.8,110.17,109.56,107.32,107.56,108.39,111.59,112.0,110.96,111.91,112.71,109.86,108.04,109.21,109.29,108.96,110.09,114.01,114.11,111.91,114.01,114.83,115.18,114.5,113.83,116.65,119.58,121.37,122.85,123.16,119.85,118.46,121.83,123.25,123.41,123.66,121.19,122.05,123.02,123.13,122.84,122.01,120.94,120.01,123.43,125.91,124.89,126.3,124.98,123.39,121.67,121.93,121.52,120.15,122.09,126.43,123.71,124.5,123.93,123.85,126.82,124.35,124.18,125.29,128.18,131.57,128.04,127.86,128.53,125.94,126.74,124.75,127.35,127.65,125.29,120.72,125.51,126.11,125.34,124.65,123.18,122.86,124.63,125.6,126.74,124.78,126.97,129.16,128.28,127.67,127.37,126.55,123.5,126.42,123.9,124.0,127.12,127.43,126.38,122.62,121.83,123.91,124.19,121.11,122.33,120.31,121.7,119.54,123.92,123.9,119.59,118.78,127.73,128.55,128.96,128.8,128.85,130.65,131.82,129.44,132.05,135.72,136.45,135.46,138.67,137.79,136.39,137.31,134.49,133.28,133.04,131.16,128.9,131.33,130.42,133.5,133.79,137.68,133.66,134.71,134.75,134.91,135.85,134.85,130.69,127.67,126.79,131.71,132.78,131.66,133.35,134.45,135.99,136.69,133.62,127.76,129.83,133.42,128.67,128.43,131.38,128.85,132.74,133.79,136.4,135.34,139.39,140.72,145.86,147.03,149.71,151.59,155.38,158.31,158.25,156.55,160.46,160.81,163.87,162.97,164.28,159.03,155.34,155.45,156.22,152.0,154.26,150.94,154.5,152.11,152.23,150.48,150.59,149.78,147.91,151.46,147.01,147.31,151.88,153.01,154.5,157.37,158.03,158.07,159.39,156.86,157.41,159.53,160.11,169.55,163.38,165.73,164.17,169.1,168.39,168.23,162.38,162.5,163.4,165.37,164.38,163.81,161.93,159.38,156.82,156.2,157.6,154.03,154.18,158.25,156.72,158.23,161.87,155.2,156.05,155.03,156.61,156.81,157.68,154.51,154.43,156.19,150.9,150.23],"v":[5.4,6.0,6.8,7.5,5.5,7.4,6.5,8.2,4.5,6.9,5.2,8.3,4.4,6.3,6.2,6.2,4.7,8.2,6.9,6.4,7.2,17.0,8.2,9.4,10.2,9.8,8.1,15.0,30.3,12.5,12.8,10.5,11.7,9.7,13.5,8.3,7.7,4.1,13.6,6.6,7.2,8.5,6.5,6.3,5.5,5.8,9.5,12.3,8.5,5.6,16.1,11.8,10.3,7.6,3.5,5.6,8.7,6.6,6.8,8.2,5.9,5.2,9.9,7.5,13.0,13.2,13.1,13.2,6.9,7.4,8.5,8.8,9.7,9.3,10.9,9.2,9.9,8.3,7.8,9.0,8.9,8.2,6.6,11.9,9.0,8.8,10.8,7.3,10.4,9.0,8.2,6.9,8.8,8.6,10.9,7.3,8.2,7.9,9.6,14.2,10.9,9.2,9.5,10.8,10.6,7.7,6.4,6.4,6.3,7.3,5.8,6.7,6.5,5.0,7.0,8.2,6.5,7.0,16.7,17.4,14.1,10.9,23.9,23.6,21.5,36.1,23.9,16.1,13.2,8.7,9.4,10.4,11.9,14.0,14.6,11.3,8.2,7.0,9.3,9.6,9.3,9.7,6.4,32.5,12.9,16.5,11.4,19.6,15.8,13.9,11.1,10.1,7.0,14.0,13.1,7.8,6.1,15.2,8.4,9.0,15.8,13.0,12.8,8.3,8.1,10.0,11.5,12.1,12.1,8.5,11.2,9.2,11.6,9.0,8.5,11.7,9.7,7.2,9.3,11.0,8.5,11.5,10.9,5.0,8.5,9.6,14.9,9.9,7.7,6.4,12.1,13.0,8.9,14.2,9.1,8.4,12.2,10.8,9.1,12.8,11.5,11.6,11.8,9.3,7.7,8.9,11.6,9.8,6.7,6.2,9.7,15.0,11.6,10.7,6.4,8.3,8.0,8.4,9.9,8.5,6.2,5.7,4.5,5.0,14.5,9.1,7.8,13.2,10.5,6.7,10.5,8.0,9.4,9.2,6.4,15.1,9.3,7.1,11.4,7.1,9.2,9.1,12.4,10.0,12.9,9.7,8.6,12.9,8.0,6.7,11.8,12.1,17.0,10.2,7.8,12.0,17.5,10.0,8.7,6.8,10.7,6.3,5.7,13.3,9.4,8.7,9.3,12.0,15.2,13.7,9.1,11.4,15.1,11.5,13.7,12.3,14.8,14.4,12.4,9.9,10.3,14.0,11.6,9.9,10.5,8.9,4.3,11.0,22.0,10.8,11.0,7.5,9.7,9.6,9.2,7.0,7.8,7.5,8.0,7.9,7.1,13.0,10.5,6.8,3.3,5.7,7.4,7.9,7.3,8.8,11.8,8.4,19.4,14.9,10.0,10.2,8.4,10.9,10.4,9.8,10.8,8.4,9.7,11.4,6.8,7.0,8.5,6.1,10.2,5.7,8.9,12.0,14.5,9.6,5.3,5.9,7.8,6.8,8.8,7.8,6.2,9.2,13.4,11.0,9.5,9.7,9.2,5.9,9.3,13.5,8.5,10.1,11.4,12.2,10.0,7.4,11.5,10.4,7.4,5.9,9.3,11.7,12.2,8.4,10.3,11.5,11.5,10.7,9.3,18.5,20.0,9.9,6.3,9.8,7.5,5.6,10.0,7.9,11.0,8.6,6.8,10.2,6.0,6.8,4.6,7.8,6.8,6.7,7.6,9.0,7.9,8.3,8.1,8.7,8.5,10.7,11.8,10.0,6.0,7.0,5.2,9.4,8.1,12.0,10.7,6.9,6.5,5.9,7.6,6.9,6.7,7.9,14.2,8.1,7.3,8.4,6.5,11.9,8.1,10.2,7.8,5.3,6.9,17.2,9.6,16.7,10.6,13.7,12.3,11.0,12.2,9.0,7.6,9.7,7.5,9.5,10.8,7.5,12.3,11.4,8.2,5.6,9.9,11.6,7.8,7.8,6.3,6.6,7.4,9.3,8.9,9.0,6.7,8.0,6.7,7.8,9.0,8.8,8.4,7.5,6.2,6.0,7.5,6.3,6.4,6.5,14.1,15.0,10.0,8.5,9.9,8.9,4.5,9.8,7.4,8.4,8.7,5.4,3.8,8.5,5.5,9.7,8.4,6.2,11.3,8.8,10.0,9.9,7.8,7.6,13.3,13.8,8.2,7.1,8.4,6.9,11.6,8.7,7.0,17.2,9.5]},"d":["2024-10-08","2024-10-09","2024-10-10","2024-10-11","2024-10-14","2024-10-15","2024-10-16","2024-10-17","2024-10-18","2024-10-21","2024-10-22","2024-10-23","2024-10-24","2024-10-25","2024-10-28","2024-10-29","2024-10-30","2024-10-31","2024-11-01","2024-11-04","2024-11-05","2024-11-06","2024-11-07","2024-11-08","2024-11-11","2024-11-12","2024-11-13","2024-11-14","2024-11-15","2024-11-18","2024-11-19","2024-11-20","2024-11-21","2024-11-22","2024-11-25","2024-11-26","2024-11-27","2024-11-29","2024-12-02","2024-12-03","2024-12-04","2024-12-05","2024-12-06","2024-12-09","2024-12-10","2024-12-11","2024-12-12","2024-12-13","2024-12-16","2024-12-17","2024-12-18","2024-12-19","2024-12-20","2024-12-23","2024-12-24","2024-12-26","2024-12-27","2024-12-30","2024-12-31","2025-01-02","2025-01-03","2025-01-06","2025-01-07","2025-01-08","2025-01-10","2025-01-13","2025-01-14","2025-01-15","2025-01-16","2025-01-17","2025-01-21","2025-01-22","2025-01-23","2025-01-24","2025-01-27","2025-01-28","2025-01-29","2025-01-30","2025-01-31","2025-02-03","2025-02-04","2025-02-05","2025-02-06","2025-02-07","2025-02-10","2025-02-11","2025-02-12","2025-02-13","2025-02-14","2025-02-18","2025-02-19","2025-02-20","2025-02-21","2025-02-24","2025-02-25","2025-02-26","2025-02-27","2025-02-28","2025-03-03","2025-03-04","2025-03-05","2025-03-06","2025-03-07","2025-03-10","2025-03-11","2025-03-12","2025-03-13","2025-03-14","2025-03-17","2025-03-18","2025-03-19","2025-03-20","2025-03-21","2025-03-24","2025-03-25","2025-03-26","2025-03-27","2025-03-28","2025-03-31","2025-04-01","2025-04-02","2025-04-03","2025-04-04","2025-04-07","2025-04-08","2025-04-09","2025-04-10","2025-04-11","2025-04-14","2025-04-15","2025-04-16","2025-04-17","2025-04-21","2025-04-22","2025-04-23","2025-04-24","2025-04-25","2025-04-28","2025-04-29","2025-04-30","2025-05-01","2025-05-02","2025-05-05","2025-05-06","2025-05-07","2025-05-08","2025-05-09","2025-05-12","2025-05-13","2025-05-14","2025-05-15","2025-05-16","2025-05-19","2025-05-20","2025-05-21","2025-05-22","2025-05-23","2025-05-27","2025-05-28","2025-05-29","2025-05-30","2025-06-02","2025-06-03","2025-06-04","2025-06-05","2025-06-06","2025-06-09","2025-06-10","2025-06-11","2025-06-12","2025-06-13","2025-06-16","2025-06-17","2025-06-18","2025-06-20","2025-06-23","2025-06-24","2025-06-25","2025-06-26","2025-06-27","2025-06-30","2025-07-01","2025-07-02","2025-07-03","2025-07-07","2025-07-08","2025-07-09","2025-07-10","2025-07-11","2025-07-14","2025-07-15","2025-07-16","2025-07-17","2025-07-18","2025-07-21","2025-07-22","2025-07-23","2025-07-24","2025-07-25","2025-07-28","2025-07-29","2025-07-30","2025-07-31","2025-08-01","2025-08-04","2025-08-05","2025-08-06","2025-08-07","2025-08-08","2025-08-11","2025-08-12","2025-08-13","2025-08-14","2025-08-15","2025-08-18","2025-08-19","2025-08-20","2025-08-21","2025-08-22","2025-08-25","2025-08-26","2025-08-27","2025-08-28","2025-08-29","2025-09-02","2025-09-03","2025-09-04","2025-09-05","2025-09-08","2025-09-09","2025-09-10","2025-09-11","2025-09-12","2025-09-15","2025-09-16","2025-09-17","2025-09-18","2025-09-19","2025-09-22","2025-09-23","2025-09-24","2025-09-25","2025-09-26","2025-09-29","2025-09-30","2025-10-01","2025-10-02","2025-10-03","2025-10-06","2025-10-07","2025-10-08","2025-10-09","2025-10-10","2025-10-13","2025-10-14","2025-10-15","2025-10-16","2025-10-17","2025-10-20","2025-10-21","2025-10-22","2025-10-23","2025-10-24","2025-10-27","2025-10-28","2025-10-29","2025-10-30","2025-10-31","2025-11-03","2025-11-04","2025-11-05","2025-11-06","2025-11-07","2025-11-10","2025-11-11","2025-11-12","2025-11-13","2025-11-14","2025-11-17","2025-11-18","2025-11-19","2025-11-20","2025-11-21","2025-11-24","2025-11-25","2025-11-26","2025-11-28","2025-12-01","2025-12-02","2025-12-03","2025-12-04","2025-12-05","2025-12-08","2025-12-09","2025-12-10","2025-12-11","2025-12-12","2025-12-15","2025-12-16","2025-12-17","2025-12-18","2025-12-19","2025-12-22","2025-12-23","2025-12-24","2025-12-26","2025-12-29","2025-12-30","2025-12-31","2026-01-02","2026-01-05","2026-01-06","2026-01-07","2026-01-08","2026-01-09","2026-01-12","2026-01-13","2026-01-14","2026-01-15","2026-01-16","2026-01-20","2026-01-21","2026-01-22","2026-01-23","2026-01-26","2026-01-27","2026-01-28","2026-01-29","2026-01-30","2026-02-02","2026-02-03","2026-02-04","2026-02-05","2026-02-06","2026-02-09","2026-02-10","2026-02-11","2026-02-12","2026-02-13","2026-02-17","2026-02-18","2026-02-19","2026-02-20","2026-02-23","2026-02-24","2026-02-25","2026-02-26","2026-02-27","2026-03-02","2026-03-03","2026-03-04","2026-03-05","2026-03-06","2026-03-09","2026-03-10","2026-03-11","2026-03-12","2026-03-13","2026-03-16","2026-03-17","2026-03-18","2026-03-19","2026-03-20","2026-03-23","2026-03-24","2026-03-25","2026-03-26","2026-03-27","2026-03-30","2026-03-31","2026-04-01","2026-04-02","2026-04-06","2026-04-07","2026-04-08","2026-04-09","2026-04-10","2026-04-13","2026-04-14","2026-04-15","2026-04-16","2026-04-17","2026-04-20","2026-04-21","2026-04-22","2026-04-23","2026-04-24","2026-04-27","2026-04-28","2026-04-29","2026-04-30","2026-05-01","2026-05-04","2026-05-05","2026-05-06","2026-05-07","2026-05-08","2026-05-11","2026-05-12","2026-05-13","2026-05-14","2026-05-15","2026-05-18","2026-05-19","2026-05-20","2026-05-21","2026-05-22","2026-05-26","2026-05-27","2026-05-28","2026-05-29","2026-06-01","2026-06-02","2026-06-03","2026-06-04","2026-06-05","2026-06-08","2026-06-09","2026-06-10","2026-06-11","2026-06-12","2026-06-15","2026-06-16","2026-06-17","2026-06-18","2026-06-22","2026-06-23","2026-06-24","2026-06-25","2026-06-26","2026-06-29","2026-06-30","2026-07-01","2026-07-02","2026-07-06","2026-07-07","2026-07-08","2026-07-09","2026-07-10","2026-07-13","2026-07-14","2026-07-15","2026-07-16","2026-07-17","2026-07-20","2026-07-21","2026-07-22","2026-07-23","2026-07-24","2026-07-27","2026-07-28","2026-07-29","2026-07-30","2026-07-31","2026-08-03","2026-08-04","2026-08-05","2026-08-06","2026-08-07","2026-08-10","2026-08-11","2026-08-12","2026-08-13","2026-08-14","2026-08-17","2026-08-18","2026-08-19","2026-08-20","2026-08-21","2026-08-24","2026-08-25","2026-08-26","2026-08-27","2026-08-28","2026-08-31","2026-09-01","2026-09-02","2026-09-03","2026-09-04","2026-09-08","2026-09-09","2026-09-10","2026-09-11","2026-09-14","2026-09-15","2026-09-16","2026-09-17","2026-09-18","2026-09-21","2026-09-22","2026-09-23","2026-09-24","2026-09-25","2026-09-28","2026-09-29","2026-09-30","2026-10-01","2026-10-02","2026-10-05","2026-10-06","2026-10-07"]};
 (function(){
 const $=s=>document.querySelector(s);
 const T=(word,tip)=>`<span class="t" tabindex="0" data-tip="${tip}">${word}</span>`;
@@ -202,6 +300,21 @@ const B=k=>({ok:'<b class="b ok">확인</b>',rep:'<b class="b rep">보도</b>',e
 const card=(title,more,body,cls='')=>`<div class="card ${cls}"><div class="ch"><h3>${title}</h3>${more?`<span class="more">${more}</span>`:''}</div>${body}</div>`;
 const kpi=(l,v,d)=>`<div class="kpi"><span class="l">${l}</span><span class="v">${v}</span>${d?`<span class="d">${d}</span>`:''}</div>`;
 const fmtB=v=>Math.abs(v)>=1000?(v<0?'-':'')+'$'+(Math.abs(v)/1000).toFixed(2)+'B':(v<0?'-':'')+'$'+Math.round(Math.abs(v))+'M';
+const pct=(a,b)=>(a/b-1)*100;
+const LW={abcl:'data:image/svg+xml,%3Csvg%20width%3D%22189%22%20height%3D%2282%22%20viewBox%3D%220%200%20189%2082%22%20fill%3D%22none%22%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%3E%0A%3Cpath%20d%3D%22M27.3217%2062.5396L9.67376%2028.1493L17.5906%2012.7112L66.5833%208.86777L80.3732%2022.0227L80.1939%2056.549L67.8669%2072.3449L27.3217%2062.5396ZM69.7457%200L12.1191%204.52335L0%2028.1493L21.463%2069.9616L71.2445%2082L88.7849%2059.5192L89%2018.3725L69.7457%200Z%22%20fill%3D%22%2307D897%22/%3E%0A%3Cpath%20d%3D%22M184.847%2046.0694C184.364%2046.473%20181.755%2048.5478%20179.318%2048.5478C177.562%2048.5478%20176.667%2047.5281%20176.667%2045.5242C176.667%2043.3928%20177.569%2042.3094%20179.353%2042.3094H184.847V46.0694ZM181.236%2031.4046C178.06%2031.4046%20174.421%2032.2048%20174.385%2032.2118L174.186%2032.2543L174.499%2035.3063L174.748%2035.2638C174.783%2035.2638%20178.486%2034.5769%20181.272%2034.5769C183.617%2034.5769%20184.847%2036.3259%20184.847%2038.0608V39.13H179.197C175.558%2039.13%20173.205%2041.6509%20173.205%2045.5596C173.205%2049.4683%20175.558%2051.7626%20179.197%2051.7626C181.599%2051.7626%20184.065%2050.3889%20184.925%2049.8578L185.096%2051.3802H188.258V37.8342C188.258%2033.9254%20185.501%2031.4046%20181.229%2031.4046M164.84%2033.8263L164.741%2031.787H161.485V51.3802H164.947V37.7209C165.302%2037.2819%20167.626%2034.5769%20170.746%2034.5769H170.974V31.3975H170.739C167.797%2031.4329%20165.665%2033.0686%20164.84%2033.8192M145.231%2039.7815C145.231%2039.3708%20145.238%2038.521%20145.267%2038.0749C145.388%2035.9506%20146.958%2034.5769%20149.261%2034.5769C151.329%2034.5769%20152.95%2036.0781%20153.028%2038.0749C153.056%2038.521%20153.063%2039.3708%20153.063%2039.7815H145.231ZM149.183%2031.3975C145.011%2031.3975%20141.976%2034.0387%20141.806%2037.8483C141.77%2039.1229%20141.727%2040.3196%20141.727%2041.5801C141.727%2042.8405%20141.763%2044.0088%20141.806%2045.3401C141.976%2049.2417%20144.876%2051.7626%20149.183%2051.7626C153.49%2051.7626%20155.707%2050.8633%20155.8%2050.8279L155.97%2050.7571L155.522%2047.7618L155.274%2047.8255C155.274%2047.8255%20152.189%2048.5832%20149.147%2048.5832C146.574%2048.5832%20145.331%2046.7705%20145.267%2045.0922C145.238%2044.4833%20145.231%2043.4282%20145.231%2042.9609H156.482V37.8342C156.482%2034.1096%20153.412%2031.4046%20149.183%2031.4046M133.391%2051.3873H136.809V24.1324H133.391V51.3873ZM123.938%2051.3873H127.356V24.1324H123.938V51.3873ZM107.954%2039.7886C107.954%2039.3779%20107.961%2038.5281%20107.989%2038.082C108.11%2035.9577%20109.681%2034.584%20111.984%2034.584C114.052%2034.584%20115.672%2036.0852%20115.75%2038.082C115.779%2038.5281%20115.786%2039.3779%20115.786%2039.7886H107.954ZM111.912%2031.4046C107.74%2031.4046%20104.706%2034.0458%20104.535%2037.8554C104.5%2039.13%20104.457%2040.3267%20104.457%2041.5871C104.457%2042.8476%20104.492%2044.0159%20104.535%2045.3472C104.706%2049.2488%20107.605%2051.7697%20111.912%2051.7697C116.219%2051.7697%20118.437%2050.8704%20118.529%2050.835L118.7%2050.7642L118.252%2047.7689L118.003%2047.8326C118.003%2047.8326%20114.919%2048.5903%20111.877%2048.5903C109.304%2048.5903%20108.06%2046.7775%20107.996%2045.0993C107.968%2044.4904%20107.961%2043.4353%20107.961%2042.9679H119.219V37.8413C119.219%2034.1166%20116.148%2031.4117%20111.92%2031.4117M100.122%2047.5635C100.079%2047.5706%2095.58%2048.3283%2093.3626%2048.3283C90.413%2048.3283%2087.2006%2046.6005%2087.1011%2042.8122C87.0229%2039.4628%2087.0229%2036.0639%2087.1011%2032.7217C87.165%2030.0663%2089.1551%2027.2055%2093.3626%2027.2055C95.6582%2027.2055%2099.887%2027.9207%2099.9296%2027.9278L100.185%2027.9703L100.321%2024.6918L100.136%2024.6493C100.136%2024.6493%2096.575%2023.7642%2093.3554%2023.7642C87.6696%2023.7642%2083.4551%2027.5313%2083.3271%2032.7146C83.2489%2036.071%2083.2489%2039.4699%2083.3271%2042.8263C83.4551%2048.0096%2087.6696%2051.7767%2093.3554%2051.7767C96.4613%2051.7767%20100.285%2050.8633%20100.328%2050.8491L100.512%2050.8066L100.377%2047.5281L100.122%2047.5706V47.5635ZM74.2299%2045.0993C74.1659%2046.7067%2073.1211%2048.5903%2070.3919%2048.5903C67.9328%2048.5903%2066.355%2048.2929%2065.8575%2048.1796V36.2126C66.4261%2035.9152%2068.9136%2034.6973%2071.0458%2034.6973C73.8816%2034.6973%2074.2014%2037.2819%2074.237%2038.0749C74.3151%2040.4046%2074.3151%2042.7697%2074.237%2045.0993M71.124%2031.5179C68.8497%2031.5179%2066.682%2032.4384%2065.8646%2032.8279V24.1324H62.446V50.7571L62.6166%2050.7996C62.6522%2050.8066%2066.419%2051.7626%2070.3919%2051.7626C74.8269%2051.7626%2077.556%2049.3621%2077.6911%2045.3401C77.7693%2042.8476%2077.7693%2040.3196%2077.6911%2037.82C77.556%2033.8688%2075.104%2031.5108%2071.124%2031.5108M43.2352%2040.2771L47.1655%2027.6092L51.0958%2040.2771H43.2352ZM44.5998%2024.1253L36%2051.3802H39.8663L42.2473%2043.6123H52.1263L54.5073%2051.3802H58.4162L49.7383%2024.1253H44.5998Z%22%20fill%3D%22%230d1b2a%22/%3E%0A%3C/svg%3E',iova:'data:image/png;base64,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'};
+const plate=(k,sm)=>`<span class="plate ${sm?'sm':''}" style="--c:var(--${k})"><img src="${LW[k]}" alt="${k==='abcl'?'AbCellera':'Iovance'}"><span class="tkr">${k.toUpperCase()}</span></span>`;
+const dl=(v,dg=1)=>`<span class="delta ${v>=0?'up':'down'}">${v>=0?'+':''}${v.toFixed(dg)}%</span>`;
+
+/* ---------- market data ---------- */
+const D=PX.d, N=D.length, LAST=N-1;
+const idx=dt=>{const i=D.findIndex(x=>x>=dt);return i<0?LAST:i};
+const C={abcl:PX.ABCL.c,iova:PX.IOVA.c,xbi:PX.XBI.c};
+const VOL={abcl:PX.ABCL.v,iova:PX.IOVA.v};
+const P={abcl:C.abcl[LAST],iova:C.iova[LAST],xbi:C.xbi[LAST]};
+const I930=idx('2026-09-30'), IYTD=idx('2026-01-01');
+const ret=(k,i)=>pct(C[k][LAST],C[k][i]);
+const hi52=k=>Math.max(...C[k].slice(-252)), lo52=k=>Math.min(...C[k].slice(-252));
+const lastDate=D[LAST];
 
 const G={
  EV:T('EV','기업가치. 시가총액에서 순현금을 뺀 값. 현금 빼고 사업 자체가 얼마로 평가받는지'),
@@ -226,9 +339,11 @@ const G={
  ATC:T('ATC','Amtagvi 투여가 승인된 치료센터'),
  GM:T('매출총이익률','매출에서 제조원가를 뺀 비율'),
  DTC:T('days to cover','공매도 물량을 하루 평균 거래량으로 되사는 데 걸리는 일수'),
+ XBI:T('XBI','미국 중소형 바이오 ETF. 업종 전체 흐름의 기준선'),
+ IDX:T('상대지수','기간 시작일 가격을 100으로 맞춰 수익률을 같은 눈금에서 비교'),
 };
 
-const P={abcl:14.59,iova:14.82};
+/* ---------- fundamentals ---------- */
 const AB={sh0:306.47,offer:17.436,pfw:3.077,opt1:[21.2,1.18],opt2:[45.1,6.53],rsu:9.8,cash630:565.1,offerNet:187,vertex:28,q3burn:50,gov:110};
 AB.basic=AB.sh0+AB.offer+AB.pfw;
 AB.tsm=AB.opt1[0]+AB.opt2[0]+AB.rsu-(AB.opt1[0]*AB.opt1[1]+AB.opt2[0]*AB.opt2[1])/P.abcl;
@@ -237,111 +352,282 @@ AB.cash=AB.cash630+AB.offerNet+AB.vertex-AB.q3burn;
 AB.cap=AB.basic*P.abcl; AB.ev=AB.cap-AB.cash; AB.fdcap=AB.fd*P.abcl;
 const IO={sh:452.97,cash:303.7,rev26:415,h1:170.743};
 IO.cap=IO.sh*P.iova; IO.ev=IO.cap-IO.cash;
+const TGT={abcl:{mean:16.67,list:[['BMO',15],['JPM',17],['Jones',25],['Truist',30]]},iova:{mean:12.80,list:[['Barclays',15],['GS',15],['WF',18],['HCW',20]]}};
+
+/* ---------- events on price charts ---------- */
+const EV={
+ abcl:[['2025-12-18','Bruker 특허 합의 $36M','ok'],['2026-04-29','CEO 주주서한','ok'],['2026-05-11','1Q 실적 · 1상 데이터(반감기 ~24일)','ok'],['2026-08-05','2Q 실적 · Jazz $84M','ok'],['2026-08-10','2상 톱라인 -83% vs -33%','ok'],['2026-08-12','$200M 증자 @$9.75','ok'],['2026-09-09','Cantor: 출시 ~2030, 3상 ~1,500명','rep'],['2026-09-29','JPM 개시 $17','rep'],['2026-10-01','IMS 학회 2상 발표','ok']],
+ iova:[['2025-08-07','2Q25 실적 · EU 신청 철회 공개','ok'],['2025-11-03','NSCLC ORR 25.6% 데이터','ok'],['2026-05-07','1Q26 실적','ok'],['2026-08-06','2Q26 매출 $99.3M 사상 최대','ok'],['2026-09-29','가이던스 $410~420M 상향','ok'],['2026-10-05','가이던스 재확인 · 누적 ~2,000명','ok']]
+};
 
 const CAL=[
- {d:'2026-10 중순',tk:'i',t:'ESMO 2026 · SARATOGA 육종 데이터',s:'등록 시험 결과, 적응증 확장 근거',imp:'md',b:'ok',soon:1},
- {d:'2026-11 초',tk:'i',t:'3Q26 실적',s:'가이던스 유지, 마진, ATM 사용 여부',imp:'hi',b:'ok',soon:1},
- {d:'2026-11 초',tk:'a',t:'3Q26 실적',s:'3상 일정·비용 구체화, 증자 후 현금',imp:'md',b:'est',soon:1},
- {d:'2026 4Q',tk:'i',t:'IOV-LUN-202 업데이트',s:'NSCLC 등록 코호트, sBLA 경로',imp:'hi',b:'ok',soon:1},
- {d:'2026 4Q',tk:'a',t:'ABCL575 1상 톱라인',s:'이후 개발 중단 예정이라 영향 작음',imp:'md',b:'ok',soon:1},
- {d:'2026 말',tk:'i',t:'EU 판단 · ATC 110곳',s:'MAA 재제출 결과(회사 기대)',imp:'md',b:'clm',soon:0},
- {d:'2027',tk:'a',t:'ABCL635 3상 개시',s:'약 1,500명, 약 2.5년',imp:'hi',b:'unk',soon:0},
- {d:'2027',tk:'a',t:'종양 VMS 2상 2건 · ABCL688/386 임상',s:'유방암→전립선암, 파이프라인 확장',imp:'md',b:'clm',soon:0},
- {d:'2027',tk:'i',t:'NSCLC sBLA 제출',s:'하반기 출시 가능',imp:'hi',b:'ok',soon:0},
- {d:'~2030',tk:'a',t:'ABCL635 출시(성공 시)',s:'CEO 발언',imp:'hi',b:'rep',soon:0}
+ {d:'2026-10 중순',tk:'i',t:'ESMO 2026 · SARATOGA 육종 데이터',s:'등록 시험 결과, 적응증 확장 근거',imp:'md',b:'ok',soon:1,col:1},
+ {d:'2026-11-06',tk:'i',t:'3Q26 실적',s:'가이던스 유지, 마진, ATM 사용 여부',imp:'hi',b:'rep',soon:1,col:1},
+ {d:'2026-11-09',tk:'a',t:'3Q26 실적',s:'3상 일정·비용 구체화, 증자 후 현금',imp:'md',b:'ok',soon:1,col:1},
+ {d:'2026 4Q',tk:'i',t:'IOV-LUN-202 업데이트',s:'NSCLC 등록 코호트, sBLA 경로',imp:'hi',b:'ok',soon:1,col:1},
+ {d:'2026 4Q',tk:'a',t:'ABCL575 1상 톱라인',s:'이후 개발 중단 예정이라 영향 작음',imp:'md',b:'ok',soon:1,col:1},
+ {d:'2026 말',tk:'i',t:'EU 판단 · ATC 110곳',s:'MAA 재제출 결과(회사 기대)',imp:'md',b:'clm',soon:0,col:1},
+ {d:'2027',tk:'a',t:'ABCL635 3상 개시',s:'약 1,500명, 약 2.5년',imp:'hi',b:'unk',soon:0,col:[2,6],u:1},
+ {d:'2027',tk:'a',t:'종양 VMS 2상 2건 · ABCL688/386 임상',s:'유방암→전립선암, 파이프라인 확장',imp:'md',b:'clm',soon:0,col:[2,6],u:1},
+ {d:'2027',tk:'i',t:'NSCLC sBLA 제출',s:'하반기 출시 가능',imp:'hi',b:'ok',soon:0,col:[2,4]},
+ {d:'2027 하반기',tk:'i',t:'NSCLC 출시 가능',s:'승인 시',imp:'hi',b:'ok',soon:0,col:[4,6]},
+ {d:'~2030',tk:'a',t:'ABCL635 출시(성공 시)',s:'CEO 발언',imp:'hi',b:'rep',soon:0,col:6}
 ];
 function tlRow(c){return `<div class="tli" style="--c:var(--${c.tk==='a'?'abcl':'iova'})"><span class="dt">${c.d}</span><span class="pin"></span><span><b>${c.tk==='a'?'ABCL':'IOVA'} · ${c.t}</b><small>${c.s}</small></span><span>${c.imp==='hi'?'<b class="b hi">영향 큼</b>':'<b class="b md">보통</b>'} ${B(c.b)}</span></div>`}
 
-const ICON={
- home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',
- a:'<circle cx="12" cy="12" r="8"/><path d="M9 15l3-7 3 7M10 13h4"/>',
- i:'<circle cx="12" cy="12" r="8"/><path d="M12 8v8"/>',
- val:'<path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/>',
- comp:'<rect x="4" y="5" width="7" height="14" rx="1"/><rect x="13" y="9" width="7" height="10" rx="1"/>',
- cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',
- risk:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',
- x:'<path d="M5 5l14 14M19 5L5 19"/>',
- hist:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',
- src:'<path d="M6 4h9l3 3v13H6z"/><path d="M9 11h6M9 15h6"/>'
-};
+/* ---------- chart engine ---------- */
+let RANGE='1Y';
+const RANGES=[['1M',21],['3M',63],['6M',126],['YTD',0],['1Y',252],['2Y',9999]];
+const startIdx=()=>RANGE==='YTD'?IYTD:Math.max(0,N-RANGES.find(r=>r[0]===RANGE)[1]);
+function niceTicks(lo,hi,n){const span=hi-lo,step0=span/n,mag=Math.pow(10,Math.floor(Math.log10(step0))),err=step0/mag,step=(err>=7.5?10:err>=3.5?5:err>=1.5?2:1)*mag,out=[];for(let v=Math.ceil(lo/step)*step;v<=hi+1e-9;v+=step)out.push(+v.toFixed(6));return out}
+const css=v=>getComputedStyle(document.documentElement).getPropertyValue(v).trim();
+function lineChart(host,cfg){
+  const W=Math.max(300,host.clientWidth),H=cfg.h||250,L=46,R=12,Tp=16,VH=cfg.vol?50:0,Bt=22;
+  const i0=cfg.i0??startIdx(),i1=LAST,cnt=Math.max(1,i1-i0);
+  const PW=W-L-R,PH=H-Tp-Bt-VH;
+  const X=i=>L+(i-i0)/cnt*PW;
+  const ser=cfg.series.map(s=>({...s,v:cfg.idx?s.vals.map(x=>x/s.vals[i0]*100):s.vals}));
+  let lo=Infinity,hi=-Infinity;ser.forEach(s=>{for(let i=i0;i<=i1;i++){const v=s.v[i];if(v<lo)lo=v;if(v>hi)hi=v}});
+  if(cfg.refs)cfg.refs.forEach(r=>{if(r.v>hi)hi=r.v;if(r.v<lo)lo=r.v});
+  const pd=(hi-lo)*.08||1;lo-=pd;hi+=pd+(cfg.events?(hi-lo)*.18:0);if(!cfg.idx&&lo<0)lo=0;
+  const Y=v=>Tp+(1-(v-lo)/(hi-lo))*PH;
+  const fmt=cfg.idx?(v=>v.toFixed(0)):(v=>'$'+(v>=100?v.toFixed(0):v.toFixed(v<10?2:1)));
+  let s=`<svg viewBox="0 0 ${W} ${H}" width="${W}" height="${H}" role="img" aria-label="${cfg.aria||'가격 차트'}"><defs>${ser.map((x,k)=>`<linearGradient id="${host.id}g${k}" x1="0" x2="0" y1="0" y2="1"><stop offset="0" stop-color="${css(x.cv)}" stop-opacity=".22"/><stop offset="1" stop-color="${css(x.cv)}" stop-opacity="0"/></linearGradient>`).join('')}</defs>`;
+  niceTicks(lo,hi,4).forEach(t=>{s+=`<line class="gl" x1="${L}" x2="${W-R}" y1="${Y(t)}" y2="${Y(t)}"/><text x="${L-6}" y="${Y(t)+3.5}" text-anchor="end">${cfg.idx?t.toFixed(0):fmt(t)}</text>`});
+  if(cfg.idx)s+=`<line class="ax0" x1="${L}" x2="${W-R}" y1="${Y(100)}" y2="${Y(100)}" stroke-dasharray="4 3"/>`;
+  const nx=W<520?3:5;for(let k=0;k<=nx;k++){const i=Math.round(i0+k/nx*cnt),d=D[i];s+=`<text x="${X(i)}" y="${H-6}" text-anchor="${k===0?'start':k===nx?'end':'middle'}">${cnt<70?d.slice(5).replace('-','/'):d.slice(2,7).replace('-','.')}</text>`}
+  if(cfg.refs)cfg.refs.forEach(r=>{s+=`<line x1="${L}" x2="${W-R}" y1="${Y(r.v)}" y2="${Y(r.v)}" stroke="${css(r.cv)}" stroke-width="1" stroke-dasharray="2 4"/><text x="${W-R}" y="${Y(r.v)-4}" text-anchor="end" style="fill:${css(r.cv)}">${r.label}</text>`});
+  ser.forEach((x,k)=>{let p='';for(let i=i0;i<=i1;i++)p+=(i===i0?'M':'L')+X(i).toFixed(1)+' '+Y(x.v[i]).toFixed(1);
+    if(cfg.area&&k===0)s+=`<path d="${p}L${X(i1)} ${Tp+PH}L${X(i0)} ${Tp+PH}Z" fill="url(#${host.id}g0)"/>`;
+    s+=`<path d="${p}" fill="none" stroke="${css(x.cv)}" stroke-width="${x.w||2}" stroke-linejoin="round" ${x.dash?'stroke-dasharray="4 3"':''}/>`;
+    s+=`<circle cx="${X(i1)}" cy="${Y(x.v[i1])}" r="3.5" fill="${css(x.cv)}"/>`});
+  if(cfg.vol){const vv=cfg.vol.vals.slice(i0,i1+1),mx=Math.max(...vv)||1,bw=Math.max(1,PW/cnt*.7),y0=H-Bt;
+    for(let i=i0;i<=i1;i++){const h=(cfg.vol.vals[i]/mx)*(VH-10);s+=`<rect x="${X(i)-bw/2}" y="${y0-h}" width="${bw}" height="${h}" fill="${css(cfg.vol.cv)}" opacity=".28"/>`}
+    s+=`<text x="${L-6}" y="${H-Bt-VH+16}" text-anchor="end">거래량</text>`}
+  const evs=(cfg.events||[]).map((e,k)=>({...e,i:idx(e[0]),n:k+1})).filter(e=>e.i>=i0&&D[e.i]<=D[LAST]);
+  let px=-99,lv=0;evs.forEach(e=>{const cx=X(e.i),cy=Y(ser[0].v[e.i]);lv=cx-px<18?lv+1:0;px=cx;const by=Math.max(Tp+2,cy-15-lv*18);s+=`<line x1="${cx}" x2="${cx}" y1="${by+8}" y2="${Tp+PH}" stroke="${css(ser[0].cv)}" stroke-opacity=".25"/><circle cx="${cx}" cy="${by}" r="8" fill="${css(ser[0].cv)}" stroke="${css('--panel')}" stroke-width="1.5"/><text x="${cx}" y="${by+3.5}" text-anchor="middle" style="fill:#fff;font-weight:600">${e.n}</text>`});
+  s+=`<line class="hl" id="${host.id}h" x1="0" x2="0" y1="${Tp}" y2="${Tp+PH}" style="display:none"/>${ser.map((x,k)=>`<circle id="${host.id}d${k}" r="4" fill="${css(x.cv)}" stroke="${css('--panel')}" stroke-width="2" style="display:none"/>`).join('')}<rect x="${L}" y="${Tp}" width="${PW}" height="${PH+VH}" fill="transparent" id="${host.id}o"/></svg><div class="ctip" id="${host.id}t"></div>`;
+  host.innerHTML=s;
+  const o=$('#'+host.id+'o'),tip=$('#'+host.id+'t'),hl=$('#'+host.id+'h');
+  const move=ev=>{const r=o.getBoundingClientRect(),sc=PW/r.width,mx=(ev.clientX-r.left)*sc;const i=Math.min(i1,Math.max(i0,Math.round(i0+mx/PW*cnt)));
+    hl.setAttribute('x1',X(i));hl.setAttribute('x2',X(i));hl.style.display='';
+    ser.forEach((x,k)=>{const d=$('#'+host.id+'d'+k);d.setAttribute('cx',X(i));d.setAttribute('cy',Y(x.v[i]));d.style.display=''});
+    const e=evs.find(e=>e.i===i);
+    tip.innerHTML=`<b>${D[i]}</b>`+ser.map(x=>`<div class="r" style="--c:${css(x.cv)}"><span>${x.name}</span><span class="n">${cfg.idx?x.v[i].toFixed(1):'$'+x.v[i].toFixed(2)}</span></div>`).join('')+(cfg.vol?`<div class="r"><span style="color:var(--muted)">거래량</span><span class="n">${cfg.vol.vals[i].toFixed(1)}M</span></div>`:'')+(e?`<div class="ev">${e.n}. ${e[1]}</div>`:'');
+    tip.style.display='block';const hostR=host.getBoundingClientRect(),px=X(i)/sc;tip.style.left=Math.min(hostR.width-tip.offsetWidth-4,Math.max(4,px+12))+'px';tip.style.top='8px'};
+  o.addEventListener('mousemove',move);o.addEventListener('touchmove',e=>{move(e.touches[0])},{passive:true});
+  o.addEventListener('mouseleave',()=>{tip.style.display='none';hl.style.display='none';ser.forEach((x,k)=>$('#'+host.id+'d'+k).style.display='none')});
+}
+const evList=(k,cv)=>`<div class="evl" style="--c:var(${cv})">${EV[k].map((e,n)=>`<div><i>${n+1}</i><span>${e[1]} <small>${e[0].slice(2)}</small></span></div>`).join('')}</div>`;
+const rngCtl=()=>`<div class="rng" data-rng>${RANGES.map(r=>`<button data-r="${r[0]}" aria-pressed="${RANGE===r[0]}">${r[0]}</button>`).join('')}</div>`;
+function dotPlot(k,max){const t=TGT[k],cv=k==='abcl'?'--abcl':'--iova',x=v=>v/max*100;
+  return `<div class="dp" style="--c:var(${cv})"><div class="ax"></div>${t.list.map((a,j)=>`<div class="pt" style="left:${x(a[1])}%"></div><div class="lbl" style="left:${x(a[1])}%;top:${j%2?52:12}px">${a[0]} $${a[1]}</div>`).join('')}<div class="mn" style="left:${x(t.mean)}%"></div><div class="pr" style="left:${x(P[k])}%"></div></div>
+  <div class="lg"><span style="--c:var(--fg)">현재가 $${P[k].toFixed(2)}</span><span style="--c:var(--blue)">평균 목표가 $${t.mean.toFixed(2)} (${pct(t.mean,P[k])>=0?'+':''}${pct(t.mean,P[k]).toFixed(0)}%)</span><span style="--c:var(${cv})">개별 목표가</span></div>`}
+
+/* ---------- views ---------- */
+const CH={};
+const ICON={home:'<path d="M3 11l9-7 9 7v9a1 1 0 0 1-1 1h-5v-6h-6v6H4a1 1 0 0 1-1-1z"/>',chart:'<path d="M4 19V5M4 19h16M7 15l4-5 3 3 5-7"/>',a:'<circle cx="12" cy="12" r="8"/><path d="M9 15l3-7 3 7M10 13h4"/>',i:'<circle cx="12" cy="12" r="8"/><path d="M12 8v8"/>',val:'<path d="M4 19V5M4 19h16M8 15l4-4 3 3 5-6"/>',comp:'<rect x="4" y="5" width="7" height="14" rx="1"/><rect x="13" y="9" width="7" height="10" rx="1"/>',cal:'<rect x="4" y="5" width="16" height="15" rx="2"/><path d="M4 10h16M9 3v4M15 3v4"/>',risk:'<path d="M12 3l9 16H3z"/><path d="M12 10v4M12 17v.5"/>',x:'<path d="M5 5l14 14M19 5L5 19"/>',hist:'<circle cx="12" cy="12" r="8"/><path d="M12 8v4l3 2"/>',src:'<path d="M6 4h9l3 3v13H6z"/><path d="M9 11h6M9 15h6"/>',swot:'<rect x="4" y="4" width="7" height="7" rx="1"/><rect x="13" y="4" width="7" height="7" rx="1"/><rect x="4" y="13" width="7" height="7" rx="1"/><rect x="13" y="13" width="7" height="7" rx="1"/>',biz:'<rect x="3" y="7" width="18" height="13" rx="2"/><path d="M9 7V5h6v2M3 12h18"/>'};
 const V=[];
+const perfRow=(name,k,cv)=>`<tr><td><span class="tag" style="--c:var(${cv})">${name}</span></td><td class="n">$${P[k].toFixed(2)}</td>${[I930,LAST-21,LAST-63,IYTD,LAST-252].map(i=>`<td class="n ${ret(k,i)>=0?'up':'down'}">${ret(k,i)>=0?'+':''}${ret(k,i).toFixed(1)}%</td>`).join('')}<td class="n">$${lo52(k).toFixed(2)}–$${hi52(k).toFixed(2)}</td></tr>`;
 
 /* OVERVIEW */
 V.push(['overview','개요','home',()=>`
 <div class="grid g2">
- ${card(`<span class="tag" style="--c:var(--abcl)">ABCL · AbCellera</span>`,'항체 발굴 플랫폼 → 자체 신약',`
+ ${card(plate('abcl',1),'임상 단계 · 판매 제품 없음',`
+  <p class="def" style="--c:var(--abcl);font-size:13.5px">항체 신약을 <b>찾아내는 기술</b>을 가진 회사가 <b>자기 약(ABCL635, 폐경 안면홍조 주사)</b>을 직접 개발 중. <a href="#" data-go="biz">사업 이해 →</a></p>
   <div class="kgrid">
-   ${kpi('주가 (9/30)','$14.59','1년 +200% '+B('rep'))}
+   ${kpi('주가 ('+lastDate.slice(5).replace('-','/')+')','$'+P.abcl.toFixed(2),'9/30 대비 '+dl(ret('abcl',I930))+' · 연초 대비 '+dl(ret('abcl',IYTD),0))}
    ${kpi('시가총액',fmtB(AB.cap),G.FD+' '+fmtB(AB.fdcap)+' '+B('est'))}
    ${kpi(G.EV,fmtB(AB.ev),'추정 현금 '+fmtB(AB.cash)+' 차감 '+B('est'))}
    ${kpi(G.SI,'15.4%','유통주식 기준 '+B('rep'))}
    ${kpi('2Q 매출','$4.1M','<span class="delta down">-76% YoY</span>')}
    ${kpi('현금+유가증권','~'+fmtB(AB.cash),'+정부지원 $110M '+B('est'))}
    ${kpi(G.RW,'2.7–4.2년','3상 비용 가정에 따라 '+B('est'))}
-   ${kpi('컨센서스 목표가','$16.67','<span class="delta up">+14%</span> 10명 '+B('rep'))}
+   ${kpi('평균 목표가','$'+TGT.abcl.mean.toFixed(2),dl(pct(TGT.abcl.mean,P.abcl),0)+' 10명 '+B('rep'))}
   </div>`)}
- ${card(`<span class="tag" style="--c:var(--iova)">IOVA · Iovance</span>`,'상업화 단계 세포치료',`
+ ${card(plate('iova',1),'상업화 단계 · 2024년부터 판매',`
+  <p class="def" style="--c:var(--iova);font-size:13.5px">환자 <b>암 속 면역세포를 키워 다시 넣는 1회 치료제(Amtagvi, 흑색종)</b>를 이미 팔고 있고 폐암으로 확장 중. <a href="#" data-go="biz">사업 이해 →</a></p>
   <div class="kgrid">
-   ${kpi('주가 (9/30)','$14.82','9/29 가이던스 상향 후 +31~35% '+B('rep'))}
+   ${kpi('주가 ('+lastDate.slice(5).replace('-','/')+')','$'+P.iova.toFixed(2),'9/30 대비 '+dl(ret('iova',I930))+' · 연초 대비 '+dl(ret('iova',IYTD),0))}
    ${kpi('시가총액',fmtB(IO.cap),'452.97M주 '+B('ok'))}
    ${kpi(G.EV,fmtB(IO.ev),G.EVS+' '+(IO.ev/IO.rev26).toFixed(1)+'배 '+B('est'))}
-   ${kpi(G.SI,'22.1%',G.DTC+' 6.0일 '+B('rep'))}
+   ${kpi(G.SI,'19.2%','7,610만 주 · 10/7 '+B('rep'))}
    ${kpi('2Q 매출','$99.3M','<span class="delta up">+66% YoY</span>')}
    ${kpi('현금+단기투자','$303.7M','부채 없음 '+B('ok'))}
    ${kpi(G.RW,'2H28','회사 가이던스 '+B('ok'))}
-   ${kpi('컨센서스 목표가','$10.70','<span class="delta down">-28%</span> 10명 '+B('rep'))}
+   ${kpi('평균 목표가','$'+TGT.iova.mean.toFixed(2),dl(pct(TGT.iova.mean,P.iova),0)+' 10/7 '+B('rep'))}
   </div>`)}
 </div>
 
-<div class="grid g3" style="margin-top:12px">
+<div class="grid mt">
+ ${card('상대 수익률 · ABCL vs IOVA vs '+G.XBI,G.IDX+' (시작일=100)',`
+  <div class="ch">${rngCtl()}<div class="lg"><span style="--c:var(--abcl)">ABCL</span><span style="--c:var(--iova)">IOVA</span><span style="--c:var(--xbi)">XBI</span></div></div>
+  <div class="chart" id="cRel"></div>
+  <div class="tw"><table><tr><th>종목</th><th class="n">종가</th><th class="n">9/30 이후</th><th class="n">1개월</th><th class="n">3개월</th><th class="n">연초 이후</th><th class="n">1년</th><th class="n">52주 범위</th></tr>${perfRow('ABCL','abcl','--abcl')}${perfRow('IOVA','iova','--iova')}${perfRow('XBI','xbi','--xbi')}</table></div>
+  <p class="note">일별 종가 ${D[0]}~${lastDate}, Yahoo Finance ${B('rep')}. 10월 첫 주 하락은 개별 악재 없이 3분기 급등 후 차익실현과 업종 순환으로 보도됨(XBI 주간 -1.4%).</p>`)}
+</div>
+
+<div class="grid g3 mt">
  ${card('핵심 포인트 · ABCL','중요도 순',`<ol class="rl">
-  <li><span class="i">1</span><span class="x">2상 효과가 크고 깨끗함<small>${G.PBO} 보정 하루 -5.3회(p&lt;0.001), 37%가 홍조 0회, 간수치 상승 없음</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">1</span><span class="x">2상 효과가 크고 깨끗함<small>${G.PBO} 보정 하루 -5.3회(p&lt;0.001), 37%가 홍조 0회, 간수치 상승 없음. 10/1 IMS 학회에서 같은 데이터 발표</small></span><span class="r">${B('ok')}</span></li>
   <li><span class="i">2</span><span class="x">파트너 대신 직접 3상을 택함<small>8/12 주당 $9.75로 $200M 증자. CEO "자체 상업화가 최선, 출시 2030년 전후"</small></span><span class="r">${B('ok')}</span></li>
   <li><span class="i">3</span><span class="x">현재가는 ABCL635 단독 가치보다 훨씬 높음<small>밸류에이션 탭 기본 가정에서 시장이 후속 파이프라인·플랫폼에 수십억 달러를 얹고 있음</small></span><span class="r">${B('est')}</span></li>
   <li><span class="i">4</span><span class="x">3상은 크고 김<small>약 1,500명·약 2.5년. 현금 소진이 커지는 구간</small></span><span class="r">${B('rep')}</span></li>
-  <li><span class="i">5</span><span class="x">플랫폼 매출은 계속 줄어듦<small>파트너 주도 프로그램 44→35개, 로열티·라이선스 매출 $10.4M→$0.1M</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">5</span><span class="x">다음 확인: 11/9 3분기 실적<small>3상 일정·비용, 증자 후 실제 현금</small></span><span class="r">${B('ok')}</span></li>
  </ol>`)}
  ${card('핵심 포인트 · IOVA','중요도 순',`<ol class="rl">
-  <li><span class="i">1</span><span class="x">매출 가속, 가이던스 상향<small>상반기 $170.7M(+56%), 연 $410–420M → 하반기 분기 평균 약 $122M 필요(2Q 대비 +23%)</small></span><span class="r">${B('est')}</span></li>
-  <li><span class="i">2</span><span class="x">상반기 ${G.ATM}으로 3,890만 주 발행<small>평균 약 $3.80에 $148M, 주식 수 약 +9%. 주가가 4배가 된 지금 추가 발행 유인이 큼</small></span><span class="r">${B('ok')}</span></li>
-  <li><span class="i">3</span><span class="x">주가가 평균 목표가를 넘어섬<small>${G.EVS} 약 15배, 평균 목표가 $10.70 &lt; 주가</small></span><span class="r">${B('rep')}</span></li>
-  <li><span class="i">4</span><span class="x">다음 성장축은 폐암(NSCLC)<small>${G.ORR} 25.6%(10/39), ${G.DOR} 25개월+ 미도달 → 2027 ${G.SBLA}</small></span><span class="r">${B('ok')}</span></li>
-  <li><span class="i">5</span><span class="x">CEO가 5년째 '임시'<small>Frederick Vogt, 2021년부터 임시 CEO 겸 법무총괄</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">1</span><span class="x">매출 가속, 가이던스 상향 후 재확인<small>상반기 $170.7M(+56%), 연 $410–420M(10/5 재확인) → 하반기 분기 평균 약 $122M 필요</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">2</span><span class="x">누적 치료 약 2,000명, 생산능력 연 5,000명+<small>10/5 회사 발표. 공급 병목보다 수요 확대가 관건</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">3</span><span class="x">상반기 ${G.ATM}으로 3,890만 주 발행<small>평균 약 $3.80에 $148M, 주식 수 약 +9%. 주가가 오른 지금 추가 발행 유인이 큼</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">4</span><span class="x">숏커버는 진행 중이지만 느림<small>공매도 9월 초 약 1억 주 → 10/7 7,610만 주(유통 19.2%)</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">5</span><span class="x">다음 확인: 11/6 3분기 실적<small>하반기 가속이 실제로 나오는지</small></span><span class="r">${B('rep')}</span></li>
  </ol>`)}
- ${card('지난 버전 대비 정정','7건',`<ol class="rl">
-  <li><span class="i">1</span><span class="x">Vertex 계약은 실제로 있음<small>7월 체결, 선급 $28M(10-Q). 지난번 '확인 안 됨' 판단이 틀림</small></span><span class="r">${B('ok')}</span></li>
-  <li><span class="i">2</span><span class="x">8/12 ABCL $200M 유상증자 누락<small>보통주 1,744만 + ${G.PFW} 308만, 주당 $9.75</small></span><span class="r">${B('ok')}</span></li>
-  <li><span class="i">3</span><span class="x">주가 $11.22/$13.24 → $14.59/$14.82<small>9/30 종가로 갱신</small></span><span class="r">${B('rep')}</span></li>
-  <li><span class="i">4</span><span class="x">ABCL 현금 $540M vs $565M<small>차이는 제한현금 $25M</small></span><span class="r">${B('ok')}</span></li>
-  <li><span class="i">5</span><span class="x">IOVA ATM 희석 누락<small>약 412M → 453M주</small></span><span class="r">${B('ok')}</span></li>
-  <li><span class="i">6</span><span class="x">ABCL575 적응증<small>아토피 피부염(OX40 계열)</small></span><span class="r">${B('rep')}</span></li>
-  <li><span class="i">7</span><span class="x">런웨이 계산 기준 변경<small>순손실 → 영업현금흐름(일회성 제외)</small></span><span class="r">${B('est')}</span></li>
+ ${card('정정 · 갱신 로그','최신순',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">가격 9/30 → ${lastDate} 종가<small>ABCL $14.59 → $${P.abcl.toFixed(2)}, IOVA $14.82 → $${P.iova.toFixed(2)}</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">2</span><span class="x">IOVA 평균 목표가 $10.70 → $12.80<small>Wells Fargo $14→$18 등 갱신 반영(Ortex 10/7)</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">3</span><span class="x">IOVA 공매도 22.1% → 19.2%<small>87.1M → 76.1M주</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">4</span><span class="x">실적일 확정<small>ABCL 11/9(공시), IOVA 11/6(보도)</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">5</span><span class="x">Vertex 계약 실재(이전 버전 정정)<small>7월 선급 $28M</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">6</span><span class="x">ABCL $200M 증자·IOVA ATM 반영(이전 버전 정정)</span><span class="r">${B('ok')}</span></li>
  </ol>`)}
 </div>
 
-<div class="grid g3" style="margin-top:12px">
+<div class="grid g3 mt">
  ${card('시가총액 구성','현금 vs 사업가치',`
   <div class="segrow"><span><span class="dot" style="--c:var(--abcl)"></span>ABCL 현금</span><span class="n">${fmtB(AB.cash)}</span><span class="n" style="color:var(--muted)">${(AB.cash/AB.cap*100).toFixed(0)}%</span></div>
   <div class="segrow"><span><span class="dot" style="--c:var(--abcl);opacity:.45"></span>ABCL 사업가치(EV)</span><span class="n">${fmtB(AB.ev)}</span><span class="n" style="color:var(--muted)">${(AB.ev/AB.cap*100).toFixed(0)}%</span></div>
   <div class="seg"><i style="--c:var(--abcl);width:${AB.cash/AB.cap*100}%"></i><i style="--c:var(--abcl);opacity:.45;width:${AB.ev/AB.cap*100}%"></i></div>
   <div class="segrow" style="margin-top:8px"><span><span class="dot" style="--c:var(--iova)"></span>IOVA 현금</span><span class="n">${fmtB(IO.cash)}</span><span class="n" style="color:var(--muted)">${(IO.cash/IO.cap*100).toFixed(0)}%</span></div>
   <div class="segrow"><span><span class="dot" style="--c:var(--iova);opacity:.45"></span>IOVA 사업가치(EV)</span><span class="n">${fmtB(IO.ev)}</span><span class="n" style="color:var(--muted)">${(IO.ev/IO.cap*100).toFixed(0)}%</span></div>
-  <div class="seg"><i style="--c:var(--iova);width:${IO.cash/IO.cap*100}%"></i><i style="--c:var(--iova);opacity:.45;width:${IO.ev/IO.cap*100}%"></i></div>
-  <p class="note">ABCL은 시총의 약 15%가 현금이고 나머지 약 $4B가 ABCL635와 후속 파이프라인 값.</p>`)}
- ${card('공매도 · 컨센서스','9/30',`
-  <div class="segrow"><span><span class="dot" style="--c:var(--abcl)"></span>ABCL ${G.SI}</span><span class="n">15.4%</span><span></span></div>
-  <div class="seg"><i style="--c:var(--abcl);width:15.4%"></i></div>
-  <div class="segrow"><span><span class="dot" style="--c:var(--iova)"></span>IOVA ${G.SI}</span><span class="n">22.1%</span><span></span></div>
-  <div class="seg"><i style="--c:var(--iova);width:22.1%"></i></div>
-  <div class="segrow" style="margin-top:8px"><span>ABCL 주가 / 평균 목표가</span><span class="n">$14.59 / $16.67</span><span class="delta up">+14%</span></div>
-  <div class="segrow"><span>IOVA 주가 / 평균 목표가</span><span class="n">$14.82 / $10.70</span><span class="delta down">-28%</span></div>
-  <p class="note">IOVA는 목표가 갱신이 주가를 못 따라간 상태(HCW $20, Barclays·GS $15). 출처 StockAnalysis ${B('rep')}</p>`)}
+  <div class="seg"><i style="--c:var(--iova);width:${IO.cash/IO.cap*100}%"></i><i style="--c:var(--iova);opacity:.45;width:${IO.ev/IO.cap*100}%"></i></div>`)}
+ ${card('애널리스트 목표가 vs 현재가','$',`<div style="display:grid;gap:14px"><div><span class="tag" style="--c:var(--abcl)">ABCL</span>${dotPlot('abcl',32)}</div><div><span class="tag" style="--c:var(--iova)">IOVA</span>${dotPlot('iova',32)}</div></div>`)}
  ${card('다음 90일','날짜순',`<div class="tl">${CAL.filter(c=>c.soon).map(tlRow).join('')}</div>`)}
-</div>`]);
+</div>`,()=>{lineChart($('#cRel'),{idx:1,h:280,aria:'상대 수익률',series:[{name:'ABCL',cv:'--abcl',vals:C.abcl},{name:'IOVA',cv:'--iova',vals:C.iova},{name:'XBI',cv:'--xbi',vals:C.xbi,w:1.5,dash:1}]})}]);
+
+/* BUSINESS */
+const flow=(steps,cv)=>`<div class="flow" style="--c:var(${cv})">${steps.map((s,i)=>`<div class="st"><span class="sn">${i+1}</span><b>${s[0]}</b><p>${s[1]}</p>${s[2]?`<small>${s[2]}</small>`:''}</div>`).join('')}</div>`;
+const money=(rows,cv)=>`<div class="mf" style="--c:var(${cv})">${rows.map(r=>`<div class="mrow"><span class="who">${r[0]}</span><span class="arr"><i></i><em>${r[1]}</em></span><span class="who">${r[2]}</span></div>`).join('')}</div>`;
+V.push(['biz','사업 이해','biz',()=>`
+<div class="grid g2">
+ ${card(plate('abcl',1),'임상 단계 · 아직 판매 제품 없음',`
+  <p class="def">항체 신약을 <b>찾아내는 기술</b>로 돈을 벌던 회사가, 그 기술로 만든 <b>자기 약</b>을 직접 개발해 팔려는 회사로 바뀌는 중입니다.</p>
+  <div class="facts">
+   <div><small>지금 파는 것</small><b>항체 발굴 서비스·기술 사용권</b></div>
+   <div><small>앞으로 팔 것</small><b>ABCL635 (승인 전)</b></div>
+   <div><small>분기 매출</small><b>$4.1M</b></div>
+  </div>`)}
+ ${card(plate('iova',1),'상업화 단계 · 2024년부터 판매',`
+  <p class="def">환자 자신의 <b>암 속 면역세포</b>를 꺼내 수십억 개로 키운 뒤 다시 넣어주는 <b>1회 맞춤형 세포치료제</b>를 이미 팔고 있는 회사입니다.</p>
+  <div class="facts">
+   <div><small>지금 파는 것</small><b>Amtagvi + Proleukin</b></div>
+   <div><small>환자</small><b>진행성 흑색종</b></div>
+   <div><small>분기 매출</small><b>$99.3M</b></div>
+  </div>`)}
+</div>
+
+<div class="grid mt">
+ ${card('<span class="tag" style="--c:var(--abcl)">ABCL</span> 항체 발굴 엔진은 이렇게 돌아갑니다','플랫폼 '+B('ok'),`
+  ${flow([['표적 정하기','병을 일으키는 단백질을 고름','예: 안면홍조를 일으키는 뇌 수용체 NK3R'],['면역 반응 만들기','사람 항체를 만드는 유전자 변형 쥐에 표적을 주입','Trianni 마우스'],['수백만 세포 검사','미세유체 칩에서 항체 내는 세포를 하나씩 기능 검사','결합만이 아니라 실제로 막는지 확인'],['유전자 해독 · AI 선별','좋은 항체의 유전자를 읽고 비슷한 후보까지 추려냄','RepSeq · Celium 소프트웨어'],['임상용 생산','자체 GMP 공장에서 임상 약 생산 → 임상시험','2025년 완공, IND까지 약 1년 목표']],'--abcl')}
+  <p class="note">항체는 몸의 면역 단백질로, 특정 표적에만 붙어 작동을 막거나 켭니다. ABCL의 차별점은 이 전 과정을 한 회사가 모두 갖춘 것이라고 회사와 롱 투자자는 주장합니다 ${B('clm')}.</p>`)}
+</div>
+
+<div class="grid g2 mt">
+ ${card('<span class="tag" style="--c:var(--abcl)">ABCL635</span> 무엇을, 누구에게','주력 후보 '+B('ok'),`
+  <div class="kv">
+   <div><span>환자</span><b>폐경 후 중등도~중증 안면홍조 여성 (하루 평균 약 10회)</b></div>
+   <div><span>원인</span><b>에스트로겐이 줄면 뇌의 체온 조절 신경(NK3R 경로)이 과민해져 열감·땀이 반복</b></div>
+   <div><span>작동 방식</span><b>NK3R을 막는 항체가 이 신호를 차단</b></div>
+   <div><span>투여</span><b>월 1회 피하주사 목표 (반감기 약 24일)</b></div>
+   <div><span>기존 치료</span><b>호르몬 요법, 매일 먹는 알약 Veozah·Lynkuet (간 모니터링 필요)</b></div>
+   <div><span>지금 단계</span><b>2상 성공 → 3상(약 1,500명, 약 2.5년) → 출시 2030년 전후</b></div>
+  </div>`)}
+ ${card('<span class="tag" style="--c:var(--abcl)">ABCL</span> 돈은 어떻게 버나','과거 → 현재 → 목표',`
+  ${money([['제약사','발굴 수수료 · 마일스톤 · 로열티','ABCL'],['Jazz · Vertex','T세포 인게이저 선급금 $84M + $28M','ABCL'],['환자 · 보험','ABCL635 판매 (승인 시, 2030~)','ABCL']],'--abcl')}
+  <div class="tw"><table><tr><th>시기</th><th>모델</th><th>대표 수입</th></tr>
+   <tr><td>2012~2023</td><td>다른 제약사 대신 항체를 찾아줌</td><td>COVID 항체 로열티로 큰 수익 ${B('clm')}</td></tr>
+   <tr><td>2024~현재</td><td>자체 신약 개발 + 선별적 파트너십</td><td>Jazz·Vertex 선급금, 분기 매출 $4.1M</td></tr>
+   <tr><td>2030~ (목표)</td><td>직접 판매</td><td>ABCL635 매출, 경영진 피크 최대 $2B 언급 ${B('clm')}</td></tr></table></div>`)}
+</div>
+
+<div class="grid mt">
+ ${card('<span class="tag" style="--c:var(--iova)">Amtagvi</span> 치료는 이렇게 진행됩니다','환자 여정 '+B('ok'),`
+  ${flow([['종양 채취','치료센터에서 환자 종양 일부를 수술로 떼어냄','승인 치료센터 약 100곳'],['면역세포 분리 · 증식','종양 속 T세포(TIL)를 꺼내 공장에서 수십억 개로 키움','제조 소요 31일 이하'],['몸 준비','항암제로 기존 림프구를 줄여 새 세포가 자리 잡게 함','입원 필요'],['1회 주입','키운 세포를 정맥으로 한 번 주입','평생 1회 치료'],['IL-2 투여','Proleukin으로 주입한 T세포를 활성화','Proleukin도 Iovance 제품']],'--iova')}
+  <p class="note">TIL은 종양 안으로 이미 들어가 암을 알아보는 환자 본인의 T세포입니다. 이 세포를 대량으로 늘려 다시 넣어 공격력을 키우는 원리입니다. 박스 경고(치료 관련 사망·혈구 감소 등)가 있어 센터에서만 투여합니다.</p>`)}
+</div>
+
+<div class="grid g2 mt">
+ ${card('<span class="tag" style="--c:var(--iova)">Amtagvi</span> 무엇을, 누구에게','판매 중 '+B('ok'),`
+  <div class="kv">
+   <div><span>환자</span><b>면역항암제(PD-1) 치료 후에도 진행된 흑색종</b></div>
+   <div><span>승인</span><b>2024-02 FDA 가속 승인, 고형암 최초 T세포 치료제. 호주 승인, EU 재신청 중</b></div>
+   <div><span>가격</span><b>정가 $515,000 (1회)</b></div>
+   <div><span>규모</span><b>누적 약 2,000명 치료, 생산능력 연 5,000명 이상</b></div>
+   <div><span>확장</span><b>폐암(NSCLC, 2027 신청), 1차 흑색종, 육종, 자궁내막암</b></div>
+  </div>`)}
+ ${card('<span class="tag" style="--c:var(--iova)">IOVA</span> 돈은 어떻게 버나','제품 판매',`
+  ${money([['치료센터 · 보험','Amtagvi 1회 치료비 (2Q 약 $91M)','IOVA'],['치료센터','Proleukin(IL-2) 판매 (2Q 약 $8M)','IOVA'],['IOVA','제조원가 · 연구개발 · 판매비','공장 · 임상 · 영업']],'--iova')}
+  <div class="segrow"><span>2Q 매출총이익률</span><span class="n">56%</span><span class="delta up">사상 최고</span></div>
+  <div class="segrow"><span>2Q 순손실</span><span class="n">-$47.3M</span><span class="delta down">아직 적자</span></div>
+  <p class="note">팔수록 원가 비중이 줄어 적자가 빠르게 줄고 있지만, 아직 연구개발·판매비가 매출총이익보다 큽니다.</p>`)}
+</div>
+
+<div class="grid mt">
+ ${card('한 장 비교','같은 질문, 다른 답',`<div class="tw"><table class="cmp">
+  <tr><th></th><th><span class="tag" style="--c:var(--abcl)">ABCL</span></th><th><span class="tag" style="--c:var(--iova)">IOVA</span></th></tr>
+  <tr><td>한 줄 정의</td><td>항체 신약 발굴 기술 → 자체 신약 개발</td><td>맞춤형 면역세포 치료제 판매</td></tr>
+  <tr><td>약의 형태</td><td>항체(단백질), 같은 약을 대량 생산</td><td>살아있는 세포, 환자마다 따로 제조</td></tr>
+  <tr><td>환자 수</td><td>폐경 여성 다수 (대규모 만성 시장)</td><td>중증 흑색종 (희귀 · 고가 시장)</td></tr>
+  <tr><td>투여</td><td>월 1회 피하주사 (예정)</td><td>1회 정맥 주입 + 입원</td></tr>
+  <tr><td>개발 단계</td><td>2상 완료, 판매 제품 없음</td><td>판매 중, 적응증 확장 중</td></tr>
+  <tr><td>매출 (2Q)</td><td>$4.1M</td><td>$99.3M</td></tr>
+  <tr><td>경쟁</td><td>경구약 Veozah·Lynkuet가 먼저 시장 선점</td><td>같은 방식 승인 경쟁자 없음, 다른 면역항암 치료와 경쟁</td></tr>
+  <tr><td>가장 큰 변수</td><td>3상 성공, 경구약 대비 우위</td><td>판매 가속, 폐암 확장, 추가 증자</td></tr>
+ </table></div>`)}
+</div>`,()=>{}]);
+
+/* SWOT */
+const SW={
+ abcl:{
+  S:[['2상 데이터가 크고 깨끗함','위약 보정 하루 -5.3회(p<0.001), 37%가 홍조 0회, 간효소 상승 없음','ok'],['월 1회 주사','반감기 약 24일. 매일 먹는 경구약 대비 편의성','ok'],['현금 여력','추정 현금 약 $730M + 정부 지원 $110M, 차입 없음','est'],['발굴부터 생산까지 내재화','미세유체 스크리닝·AI 선별·자체 GMP 공장','clm'],['경영진 이해관계 일치','CEO 지분 약 21%, 8월 CFO·이사 장내 매수','clm']],
+  W:[['판매 제품 없음','분기 매출 $4.1M, 전년 대비 -76%','ok'],['기존 사업 축소','파트너 주도 프로그램 44→35개, 로열티 매출 분기 $0.1M','ok'],['단일 자산 의존','기업가치 대부분이 ABCL635에 걸림','est'],['2상 규모가 작음','92명·4주 단회 투여 데이터','ok'],['상업화 경험 없음','직접 판매를 선호하지만 영업 조직이 없음','est']],
+  O:[['경구약의 약점','매일 복용, 간 모니터링 필요(Veozah 박스 경고)','rep'],['암 치료 환자 확장','호르몬제를 못 쓰는 유방암·전립선암 치료 환자 대상 2상 2건','rep'],['후속 장기 지속형','반감기를 늘린 후속 NK3R 항체 IND 준비','rep'],['다음 파이프라인','GPCR 표적 ABCL688, 종양 TCE ABCL386 2027 임상','clm'],['파트너링·인수 선례','fezolinetant 2상 단계 인수 선급 약 $550M','clm']],
+  T:[['경구약 선점','Veozah(2023)·Lynkuet(2025)가 ABCL635 출시(~2030) 전 시장 장악','ok'],['3상 리스크','1,500명·장기 시험에서 효과 축소나 안전성 신호','est'],['추가 희석','3상과 직접 상업화 비용','est'],['이미 높은 기대','EV 약 $3.5B vs 기본 가정 ABCL635 가치 약 $0.9B','est'],['공매도','유통주식의 약 15%','rep']]
+ },
+ iova:{
+  S:[['고형암 최초 승인 T세포 치료','같은 방식으로 승인된 경쟁 제품 없음','ok'],['매출 가속','2Q $99.3M(+66% YoY), 연 가이던스 $410~420M','ok'],['원가 개선','매출총이익률 56%로 사상 최고','ok'],['생산 규모','누적 약 2,000명 치료, 생산능력 연 5,000명+','ok'],['폐암 데이터','NSCLC 반응률 25.6%, 반응 25개월 이상 지속','ok']],
+  W:[['아직 적자','2Q 순손실 $47.3M, 상반기 영업현금 -$133M','ok'],['반복되는 희석','상반기 ATM 3,890만 주(+9%)','ok'],['치료 과정이 복잡','수술·입원·항암 전처치, 박스 경고','rep'],['단일 제품 의존','매출의 약 92%가 Amtagvi','est'],['지배구조','2021년부터 임시 CEO 체제, EU 첫 신청 철회','rep']],
+  O:[['폐암 확장','NSCLC 2027 sBLA, 하반기 출시 가능. 흑색종보다 훨씬 큰 시장','ok'],['1차 흑색종','TILVANCE-301 3상(키트루다 병용)','ok'],['신규 적응증','육종(ESMO 10월), 자궁내막암','ok'],['해외 확장','EU 재신청, 스위스 2027, 호주 승인','ok'],['인수 가능성','Gilead의 Kite 인수 $11.9B 선례','ok']],
+  T:[['가이던스 미달','하반기 분기 평균 약 $122M 필요(2Q $99M)','est'],['추가 ATM','주가 상승 후 발행 유인 큼','est'],['경쟁 치료','이중항체·ADC 등 다른 면역항암 치료의 발전','mem'],['규제·제조','EU 재차 불허, 제조·품질 사고 가능성','est'],['변동성','공매도 유통 19%, 9월 급등 후 되돌림','rep']]
+ }
+};
+const swQ={S:['강점','Strengths','--up'],W:['약점','Weaknesses','--down'],O:['기회','Opportunities','--blue'],T:['위협','Threats','--warn']};
+const swBox=k=>`<div class="swg">${['S','W','O','T'].map(q=>`<div class="swq" style="--q:var(${swQ[q][2]})"><div class="swh"><span class="swl">${q}</span><b>${swQ[q][0]}</b><small>${swQ[q][1]}</small></div><ol>${SW[k][q].map(x=>`<li><b>${x[0]}</b> ${B(x[2])}<small>${x[1].replace('<','&lt;')}</small></li>`).join('')}</ol></div>`).join('')}</div>`;
+V.push(['swot','SWOT','swot',()=>`
+<div class="grid g2">
+ ${card(plate('abcl',1),'2026-10-07 기준',`${swBox('abcl')}
+  <div class="quote" style="--c:var(--abcl)"><b>시사점</b> 강점(데이터·현금)은 확실하지만, 위협(경구약 선점·높은 기대)이 주가에 이미 큰 부담. 다음 확인 포인트는 3상 설계와 비용(11/9 실적).</div>`)}
+ ${card(plate('iova',1),'2026-10-07 기준',`${swBox('iova')}
+  <div class="quote" style="--c:var(--iova)"><b>시사점</b> 강점(판매 가속·독점적 지위)이 검증 중이고, 약점(적자·희석)은 매출이 늘수록 줄어드는 구조. 11/6 실적에서 하반기 가속이 나오는지가 관건.</div>`)}
+</div>
+<div class="grid mt">
+ ${card('SWOT 나란히 보기','같은 항목, 다른 강도 '+B('est'),`<div class="tw"><table class="cmp">
+  <tr><th></th><th><span class="tag" style="--c:var(--abcl)">ABCL</span></th><th><span class="tag" style="--c:var(--iova)">IOVA</span></th></tr>
+  <tr><td>가장 큰 강점</td><td>2상 효능·안전성 데이터</td><td>이미 팔리는 독점 제품</td></tr>
+  <tr><td>가장 큰 약점</td><td>매출 없음, 단일 자산</td><td>적자와 반복 희석</td></tr>
+  <tr><td>가장 큰 기회</td><td>암 환자 안면홍조, 후속 장기형</td><td>폐암 확장 (2027)</td></tr>
+  <tr><td>가장 큰 위협</td><td>경구약 2개의 시장 선점</td><td>하반기 매출 가속 실패</td></tr>
+  <tr><td>시간축</td><td>결과가 나오기까지 3~4년 (3상 → 2030 출시)</td><td>분기마다 실적으로 검증</td></tr>
+ </table></div>`)}
+</div>`,()=>{}]);
 
 /* ABCL */
 V.push(['abcl','ABCL','a',()=>`
-<div class="grid g4">
+<div class="grid">
+ ${card(plate('abcl',1)+'<span style="margin-left:10px">주가 · 거래량 · 주요 사건</span>','일별 종가',`
+  <div class="ch">${rngCtl()}<div class="lg"><span style="--c:var(--abcl)">종가</span><span style="--c:var(--violet)">증자가 $9.75</span><span style="--c:var(--blue)">평균 목표가</span></div></div>
+  <div class="chart" id="cA"></div>${evList('abcl','--abcl')}`)}
+</div>
+<div class="grid g4 mt">
  ${card('손익 (2Q26)','10-Q '+B('ok'),`<div class="tw"><table style="min-width:0"><tr><th></th><th class="n">2Q26</th><th class="n">2Q25</th></tr>
   <tr><td>연구 수수료</td><td class="n">3.9</td><td class="n">6.6</td></tr>
   <tr><td>라이선스·로열티</td><td class="n">0.1</td><td class="n">10.4</td></tr>
@@ -358,7 +644,7 @@ V.push(['abcl','ABCL','a',()=>`
   </div><p class="note">일회성 제외 시 연 약 $200M 소진 ${B('est')}. 3상이 시작되면 커짐.</p>`)}
  ${card('현금 브리지','6/30 → 9/30 '+B('est'),`
   <div class="wf">${[['6/30 현금(제한 포함)',0,565.1,'var(--fg2)'],['+ 증자 순수입',565.1,187,'var(--up)'],['+ Vertex 선급',752.1,28,'var(--up)'],['- 3Q 소진(추정)',730.1,50,'var(--down)'],['9/30 추정 현금',0,730.1,'var(--abcl)'],['+ 정부지원 미사용',730.1,110,'var(--blue)']].map(r=>`<div class="wfr"><span>${r[0]}</span><span class="tr"><i style="--c:${r[3]};left:${r[1]/900*100}%;width:${r[2]/900*100}%"></i></span><span class="vv">${r[2].toFixed(0)}</span></div>`).join('')}</div>
-  <p class="note">증자 순수입은 총 $200M에서 수수료 약 6.5%를 뺀 추정. Jazz 세 번째 프로그램 $28M은 미반영.</p>`)}
+  <p class="note">증자 순수입은 총 $200M에서 수수료 약 6.5%를 뺀 추정. 실제는 11/9 실적에서 확인.</p>`)}
  ${card('주식 수 브리지','백만 주 '+B('est'),`
   <div class="wf">${[['6/30 발행',0,AB.sh0,'var(--fg2)'],['+ 8월 증자',AB.sh0,AB.offer,'var(--abcl)'],['+ 사전납입 워런트',AB.sh0+AB.offer,AB.pfw,'var(--abcl)'],['+ 옵션·RSU(순)',AB.basic,AB.tsm,'var(--violet)'],['완전희석',0,AB.fd,'var(--fg)']].map(r=>`<div class="wfr"><span>${r[0]}</span><span class="tr"><i style="--c:${r[3]};left:${r[1]/400*100}%;width:${r[2]/400*100}%"></i></span><span class="vv">${r[2].toFixed(1)}</span></div>`).join('')}</div>
   <p class="note">옵션 6,630만(평균 행사가 $1.18·$6.53) + RSU 980만, 현재가 기준 자사주 매입법. ${G.FD} 시총 ${fmtB(AB.fdcap)}.</p>`)}
@@ -370,17 +656,18 @@ V.push(['abcl','ABCL','a',()=>`
    ${kpi('홍조 0회 도달','37%','심각도 0점 24~25% '+B('rep'))}
    ${kpi('반감기','~24일','월 1회 피하주사 가능')}
   </div>
-  <div class="tw"><table><tr><th>항목</th><th>내용</th></tr>
-   <tr><td>2상 설계</td><td>92명, 1:1 무작위·이중맹검, 600mg 단회 피하주사, 4주 평가, 1주차부터 유의</td></tr>
-   <tr><td>안전성</td><td>중대·중증 이상반응 0, 이상반응 중단 0, 간효소 상승 없음(1상). 흔한 이상반응: 두통·피로·주사부위</td></tr>
-   <tr><td>1상</td><td>SAD 30~900mg(40명), MAD 300~600mg 월 1회(폐경 여성 16명), 남성 테스토스테론 억제로 표적 결합 확인</td></tr>
-   <tr><td>한계</td><td>4주 단회 투여 데이터. 경쟁약 허가 시험은 12주 평가라 직접 비교 불가</td></tr>
-  </table></div>`,'s2')}
+  <div class="hb">
+   <div class="hbr" style="--c:var(--abcl)"><span class="lb">빈도 감소 ABCL635</span><span class="tr"><i style="width:83%"></i></span><span class="vv">-83%</span></div>
+   <div class="hbr" style="--c:var(--xbi)"><span class="lb">빈도 감소 위약</span><span class="tr"><i style="width:33%"></i></span><span class="vv">-33%</span></div>
+   <div class="hbr" style="--c:var(--abcl)"><span class="lb">심각도 ABCL635</span><span class="tr"><i style="width:58%"></i></span><span class="vv">-58%</span></div>
+   <div class="hbr" style="--c:var(--xbi)"><span class="lb">심각도 위약</span><span class="tr"><i style="width:12%"></i></span><span class="vv">-12%</span></div>
+  </div>
+  <p class="note">92명 1:1 무작위·이중맹검, 600mg 단회 피하주사, 4주. 중대·중증 이상반응 0, 이상반응 중단 0. 경쟁약 허가 시험은 12주 평가라 직접 비교 불가.</p>`,'s2')}
  ${card('경영진 발언 · Cantor (9/9)','트랜스크립트 요약 '+B('rep'),`
   <div class="quote" style="--c:var(--abcl)">출시는 2030년 전후. 자체 상업화가 가장 선호하는 시나리오, 조건 맞는 파트너면 열려 있음<small>Carl Hansen CEO</small></div>
   <div class="quote" style="--c:var(--abcl)">3상 약 1,500명, 공동 1차 지표는 빈도·심각도, 약 2.5년. 상업 용량은 월 1회 300mg 가능성</div>
   <div class="quote" style="--c:var(--abcl)">FDA ${G.MIDD} 프로그램 진입. 유방암·전립선암 치료로 생기는 안면홍조 2상 2건 계획</div>
-  <div class="quote" style="--c:var(--abcl)">반감기를 더 늘린 후속 NK3R 항체를 IND 준비 중. "빈 자리를 남기지 않겠다"</div>
+  <div class="quote" style="--c:var(--abcl)">반감기를 더 늘린 후속 NK3R 항체를 IND 준비 중</div>
   <p class="note">요약본에 연도 표기 오류가 있어 3상 개시 연도는 공식 확인 전까지 ${B('unk')}.</p>`,'s2')}
 
  ${card('파이프라인','6/30 기준',`<div class="tw"><table><tr><th>프로그램</th><th>적응증·기전</th><th>단계</th><th>다음</th></tr>
@@ -391,49 +678,59 @@ V.push(['abcl','ABCL','a',()=>`
   <tr><td>ABCL688</td><td>GPCR 표적</td><td>IND 준비</td><td>2027 임상 ${B('clm')}</td></tr>
   <tr><td>ABCL386</td><td>종양(${G.TCE} 추정)</td><td>IND 준비</td><td>2027 임상 ${B('clm')}</td></tr></table></div>`,'s2')}
  ${card('파트너십','10-Q '+B('ok'),`<ol class="rl">
-  <li><span class="i">1</span><span class="x">Jazz · ${G.TCE} (2026-06)<small>선급 $56M 수령 + 세 번째 프로그램 착수 시 $28M, 프로그램당 최대 $792M + 로열티</small></span><span class="r">$84M</span></li>
+  <li><span class="i">1</span><span class="x">Jazz · ${G.TCE} (2026-06)<small>선급 $56M + 세 번째 프로그램 착수 시 $28M, 프로그램당 최대 $792M + 로열티</small></span><span class="r">$84M</span></li>
   <li><span class="i">2</span><span class="x">Vertex · 자가면역 다중특이 TCE (2026-07)<small>선급 $28M + 마일스톤·단계별 로열티</small></span><span class="r">$28M</span></li>
-  <li><span class="i">3</span><span class="x">Bruker 특허 합의 (2025-12)<small>일시금 $36M + Beacon 장비 전 세계 판매 로열티</small></span><span class="r">$36M</span></li>
+  <li><span class="i">3</span><span class="x">Bruker 특허 합의 (2025-12)<small>일시금 $36M + Beacon 장비 판매 로열티</small></span><span class="r">$36M</span></li>
   <li><span class="i">4</span><span class="x">AbbVie · 종양 TCE 확대 (2025 초)<small>조건 비공개</small></span><span class="r">-</span></li>
  </ol>
   <div class="segrow"><span>파트너 주도 프로그램</span><span class="n">35</span><span class="delta down">44→35</span></div><div class="seg"><i style="--c:var(--abcl);width:100%;opacity:.35"></i></div>
   <div class="segrow"><span>임상 단계 지분 분자</span><span class="n">12</span><span></span></div><div class="seg"><i style="--c:var(--abcl);width:34%;opacity:.6"></i></div>
   <div class="segrow"><span>자체 임상</span><span class="n">2</span><span></span></div><div class="seg"><i style="--c:var(--abcl);width:6%"></i></div>`,'s2')}
 
- ${card('증자 · 내부자 거래','8월',`<ol class="rl">
-  <li><span class="i">1</span><span class="x">유상증자 가격 결정 (8/12)<small>$9.75 · 총 $200M · Jefferies, JPM, Cantor, UBS, BMO</small></span><span class="r">${B('ok')}</span></li>
-  <li><span class="i">2</span><span class="x">CFO Andrew Booth 장내 매수 (8/14)<small>37,200주 @ $10.32</small></span><span class="r">${B('clm')}</span></li>
-  <li><span class="i">3</span><span class="x">이사 John Montalbano 장내 매수 (8/18)<small>10,000주 @ $11.03</small></span><span class="r">${B('clm')}</span></li>
- </ol><p class="note">내부자 매수는 Prescott 게시물의 Form 4 캡처 기준, SEC 원문 대조 전.</p>`)}
- ${card('애널리스트','목표가',`<ol class="rl">
+ ${card('애널리스트 목표가','vs 현재가',`${dotPlot('abcl',32)}<ol class="rl">
   <li><span class="i">1</span><span class="x">Truist<small>$12 → $30 · Buy (8/11)</small></span><span class="r">$30</span></li>
   <li><span class="i">2</span><span class="x">JonesResearch<small>$13 → $25 (8/10)</small></span><span class="r">$25</span></li>
-  <li><span class="i">3</span><span class="x">J.P. Morgan<small>신규 Overweight · 의사 설문 근거 (9/29)</small></span><span class="r">$17</span></li>
-  <li><span class="i">4</span><span class="x">BMO<small>$7 → $15 (8/11)</small></span><span class="r">$15</span></li>
-  <li><span class="i">·</span><span class="x">평균 (10명)</span><span class="r">$16.67</span></li>
- </ol>`)}
+  <li><span class="i">3</span><span class="x">J.P. Morgan<small>신규 Overweight (9/29)</small></span><span class="r">$17</span></li>
+  <li><span class="i">4</span><span class="x">BMO<small>$7 → $15 (8/11)</small></span><span class="r">$15</span></li></ol>`,'s2')}
+ ${card('증자 · 내부자 거래','8월',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">유상증자 (8/12)<small>$9.75 · 총 $200M · Jefferies, JPM, Cantor, UBS, BMO</small></span><span class="r">${B('ok')}</span></li>
+  <li><span class="i">2</span><span class="x">CFO Andrew Booth 매수 (8/14)<small>37,200주 @ $10.32</small></span><span class="r">${B('clm')}</span></li>
+  <li><span class="i">3</span><span class="x">이사 John Montalbano 매수 (8/18)<small>10,000주 @ $11.03</small></span><span class="r">${B('clm')}</span></li>
+ </ol><p class="note">현재가 $${P.abcl.toFixed(2)}는 증자가 대비 ${dl(pct(P.abcl,9.75),0)}. 내부자 매수는 Form 4 캡처 기준, SEC 원문 대조 전.</p>`)}
  ${card('부채성 의무 · 우발','10-Q '+B('ok'),`<ol class="rl">
   <li><span class="i">1</span><span class="x">리스 부채<small>유동 $5.7M + 비유동 $129.9M</small></span><span class="r">$135.6M</span></li>
   <li><span class="i">2</span><span class="x">Dayhu JV 모기지 보증<small>CAD 42M 한도</small></span><span class="r">$29.6M</span></li>
-  <li><span class="i">3</span><span class="x">정부 지원 미사용분<small>캐나다 CAD 103.1M + BC주 CAD 53.0M, 조건부</small></span><span class="r">$110M</span></li>
- </ol><p class="note">경영진: 현 계획 기준 최소 36개월 자금 충분(증자 전 문구).</p>`,'s2')}
-</div>`]);
+  <li><span class="i">3</span><span class="x">정부 지원 미사용분<small>조건부</small></span><span class="r">$110M</span></li></ol>`)}
+</div>`,()=>{lineChart($('#cA'),{h:300,area:1,aria:'ABCL 주가',series:[{name:'ABCL',cv:'--abcl',vals:C.abcl}],vol:{vals:VOL.abcl,cv:'--abcl'},events:EV.abcl,refs:[{v:9.75,cv:'--violet',label:'증자 $9.75'},{v:TGT.abcl.mean,cv:'--blue',label:'평균 목표가 $'+TGT.abcl.mean}]})}]);
 
 /* IOVA */
 V.push(['iova','IOVA','i',()=>`
-<div class="grid g4">
+<div class="grid">
+ ${card(plate('iova',1)+'<span style="margin-left:10px">주가 · 거래량 · 주요 사건</span>','일별 종가',`
+  <div class="ch">${rngCtl()}<div class="lg"><span style="--c:var(--iova)">종가</span><span style="--c:var(--violet)">상반기 ATM 평균 ~$3.80</span><span style="--c:var(--blue)">평균 목표가</span></div></div>
+  <div class="chart" id="cI"></div>${evList('iova','--iova')}`)}
+</div>
+<div class="grid g4 mt">
  ${card('반기 매출','$M',`
   <div class="vbars">${[['1H25',109.3,0],['2H25',150,1],['1H26',170.7,0],['2H26',244.3,2]].map(r=>`<div class="vb" style="--c:var(--iova)"><span>${r[1].toFixed(0)}</span><i class="${r[2]?'est':''}" style="height:${r[1]/260*100}%"></i></div>`).join('')}</div>
   <div class="vlab"><span>1H25</span><span>2H25*</span><span>1H26</span><span>2H26E</span></div>
-  <p class="note">*2H25는 '연 약 60% 성장' 문구로 역산 ${B('est')}. 2H26E는 가이던스 중간값 $415M에서 상반기를 뺀 값 ${B('est')}.</p>`)}
+  <p class="note">*2H25는 '연 약 60% 성장' 문구로 역산 ${B('est')}. 2H26E는 가이던스 중간값 $415M에서 상반기를 뺀 값.</p>`)}
+ ${card('분기 매출','$M',`
+  <div class="vbars">${[['2Q25',60.0,0],['1Q26',71.4,0],['2Q26',99.3,0],['3Q26E',122,2],['4Q26E',122,2]].map(r=>`<div class="vb" style="--c:var(--iova)"><span>${r[1].toFixed(0)}</span><i class="${r[2]?'est':''}" style="height:${r[1]/140*100}%"></i></div>`).join('')}</div>
+  <div class="vlab"><span>2Q25</span><span>1Q26</span><span>2Q26</span><span>3Q26E</span><span>4Q26E</span></div>
+  <p class="note">3Q·4Q는 가이던스 달성에 필요한 평균값 ${B('est')}. 11/6 실적에서 3Q 실제치 확인.</p>`)}
  ${card('2Q26 매출 구성','10-Q·IR',`
   <div class="dwrap"><div class="donut" style="background:conic-gradient(var(--iova) 0 ${91/99.3*360}deg,var(--blue) 0 360deg)"></div>
   <div style="display:grid;gap:6px;min-width:0;flex:1">
    <div class="segrow"><span><span class="dot" style="--c:var(--iova)"></span>Amtagvi</span><span class="n">~$91M</span><span class="n" style="color:var(--muted)">92%</span></div>
    <div class="segrow"><span><span class="dot" style="--c:var(--blue)"></span>Proleukin</span><span class="n">~$8M</span><span class="n" style="color:var(--muted)">8%</span></div>
-   <div class="segrow"><span>1Q26 → 2Q26</span><span class="n">71.4 → 99.3</span><span class="delta up">+39%</span></div>
   </div></div>
-  <p class="note">Amtagvi ${G.WAC} $515,000 → 2Q 약 177명 치료 추정(순가격이 낮으면 더 많음) ${B('est')}</p>`)}
+  <p class="note">Amtagvi ${G.WAC} $515,000 → 2Q 약 177명 추정 ${B('est')}. 누적 약 2,000명, 생산능력 연 5,000명+ ${B('ok')}</p>`)}
+ ${card('공매도 추이','백만 주 '+B('rep'),`
+  <div class="vbars">${[['9월 초',101],['9월 중순',87.1],['10/7',76.1]].map(r=>`<div class="vb" style="--c:var(--down)"><span>${r[1]}</span><i style="height:${r[1]/110*100}%;opacity:.75"></i></div>`).join('')}</div>
+  <div class="vlab"><span>9월 초</span><span>9월 중순</span><span>10/7</span></div>
+  <p class="note">유통주식 대비 22% → 19.2%. 대여 가능 물량이 충분해 강제 숏스퀴즈 신호는 없음(Ortex).</p>`)}
+
  ${card('손익 (2Q26)','10-Q '+B('ok'),`<div class="tw"><table style="min-width:0"><tr><th></th><th class="n">2Q26</th><th class="n">2Q25</th></tr>
   <tr><td>매출</td><td class="n">99.3</td><td class="n">60.0</td></tr>
   <tr><td>매출원가</td><td class="n">43.6</td><td class="n">48.9</td></tr>
@@ -449,39 +746,47 @@ V.push(['iova','IOVA','i',()=>`
   </div>
   <div class="segrow"><span>주식 수</span><span class="n">~412M → 453M</span><span class="delta down">+9.4%</span></div>
   <p class="note">상반기 소진 속도면 현금 $304M은 약 1.1년. 회사의 2H28 런웨이는 매출 증가로 소진이 빠르게 준다는 전제 ${B('est')}</p>`)}
-
- ${card('IOV-LUN-202 · 비편평 NSCLC','2025-11 데이터 '+B('ok'),`
-  <div class="kgrid">${kpi(G.ORR,'25.6%','10/39명 · CR 2')}${kpi('질병통제율','71.8%','')}${kpi(G.DOR,'미도달','추적 중앙값 25.4개월')}${kpi('대상','2차 이상','면역항암제·항암화학 후, 표적 변이 없음')}</div>
-  <p class="body">등록 거의 완료, 4분기 업데이트, 2027 ${G.SBLA}, 2027 하반기 출시 가능. 이 환자군 표준인 도세탁셀의 반응률은 대략 10%대 ${B('mem')}라 반응의 지속성이 핵심 차별점.</p>`,'s2')}
- ${card('파이프라인 · 지역 확장','2Q26 IR',`<div class="tw"><table><tr><th>프로그램</th><th>내용</th><th>다음</th></tr>
-  <tr><td><b>Amtagvi US</b></td><td>진행성 흑색종 2차 이상, 2024-02 승인</td><td>${G.ATC} ~100곳 → 연말 110+</td></tr>
-  <tr><td>Amtagvi EU</td><td>2025-07 ${G.MAA} 철회(EMA: 효능 평가 불가) → 2026-07 재제출</td><td>회사 기대: 연말 ${B('clm')}</td></tr>
-  <tr><td>TILVANCE-301</td><td>1차 흑색종 + 키트루다, 3상</td><td>조기 중간분석으로 sBLA 가능</td></tr>
-  <tr><td>SARATOGA</td><td>육종(UPS/DDLPS), 등록 시험</td><td>ESMO 10월</td></tr>
-  <tr><td>IOV-END-201</td><td>자궁내막 장액성암</td><td>FDA 협의</td></tr>
-  <tr><td>IOV-4001/5001/3001</td><td>차세대 TIL</td><td>1/2상</td></tr></table></div>`,'s2')}
-
- ${card('애널리스트','목표가',`<ol class="rl">
-  <li><span class="i">1</span><span class="x">H.C. Wainwright<small>$9 → $20 · Buy</small></span><span class="r">$20</span></li>
-  <li><span class="i">2</span><span class="x">Barclays<small>$13 → $15 · Overweight</small></span><span class="r">$15</span></li>
-  <li><span class="i">3</span><span class="x">Goldman Sachs<small>Buy</small></span><span class="r">$15</span></li>
-  <li><span class="i">·</span><span class="x">평균 (10명, 갱신 지연)</span><span class="r">$10.70</span></li>
- </ol><p class="note">Seeking Alpha 기고 "턴어라운드는 이미 가격에 반영" Hold 하향 ${B('rep')}</p>`)}
- ${card('지배구조 · 신호','',`<ol class="rl">
-  <li><span class="i">1</span><span class="x">임시 CEO 5년째<small>Frederick Vogt(법무총괄 겸임), 2021-05 전임 CEO 사임 후</small></span><span class="r">${B('rep')}</span></li>
-  <li><span class="i">2</span><span class="x">Amtagvi 박스 경고<small>치료 관련 사망, 장기 혈구감소, 중증 감염 등</small></span><span class="r">${B('rep')}</span></li>
-  <li><span class="i">3</span><span class="x">EU 첫 신청 철회 이력<small>효능 평가 불가 판단</small></span><span class="r">${B('ok')}</span></li>
- </ol>`)}
- ${card('가이던스 해부','9/29 '+B('ok'),`
+ ${card('가이던스 해부','9/29 상향 · 10/5 재확인 '+B('ok'),`
   <div class="hb">
    <div class="hbr" style="--c:var(--muted)"><span class="lb">기존 가이던스 중간</span><span class="tr"><i style="width:${360/430*100}%"></i></span><span class="vv">360</span></div>
    <div class="hbr" style="--c:var(--iova)"><span class="lb">신규 가이던스 중간</span><span class="tr"><i style="width:${415/430*100}%"></i></span><span class="vv">415</span></div>
    <div class="hbr" style="--c:var(--blue)"><span class="lb">기존 컨센서스</span><span class="tr"><i style="width:${403/430*100}%"></i></span><span class="vv">~403</span></div>
    <div class="hbr" style="--c:var(--fg2)"><span class="lb">2Q × 4</span><span class="tr"><i style="width:${397.2/430*100}%"></i></span><span class="vv">397</span></div>
-  </div><p class="note">상향 폭은 컨센서스 대비 약 3%인데 주가는 +31~35%. 실적 자체보다 공매도 22%의 숏커버가 반응을 키운 것으로 보임 ${B('est')}</p>`,'s2')}
-</div>`]);
+  </div><p class="note">상향 폭은 컨센서스 대비 약 3%인데 주가는 하루 +31~35%. 숏커버가 반응을 키웠고 10월 첫 주에 일부 되돌림 ${B('est')}</p>`,'s2')}
+
+ ${card('IOV-LUN-202 · 비편평 NSCLC','2025-11 데이터 '+B('ok'),`
+  <div class="kgrid">${kpi(G.ORR,'25.6%','10/39명 · CR 2')}${kpi('질병통제율','71.8%','')}${kpi(G.DOR,'미도달','추적 중앙값 25.4개월')}${kpi('대상','2차 이상','면역항암제·항암화학 후')}</div>
+  <div class="hb">
+   <div class="hbr" style="--c:var(--iova)"><span class="lb">lifileucel ORR</span><span class="tr"><i style="width:25.6%"></i></span><span class="vv">25.6%</span></div>
+   <div class="hbr" style="--c:var(--xbi)"><span class="lb">도세탁셀 ORR(참고)</span><span class="tr"><i style="width:12%"></i></span><span class="vv">~10%대</span></div>
+  </div>
+  <p class="note">도세탁셀 수치는 ${B('mem')}. 등록 거의 완료, 4분기 업데이트, 2027 ${G.SBLA}, 2027 하반기 출시 가능.</p>`,'s2')}
+ ${card('파이프라인 · 지역 확장','2Q26 IR',`<div class="tw"><table><tr><th>프로그램</th><th>내용</th><th>다음</th></tr>
+  <tr><td><b>Amtagvi US</b></td><td>진행성 흑색종 2차 이상, 2024-02 승인</td><td>${G.ATC} ~100곳 → 연말 110+</td></tr>
+  <tr><td>Amtagvi EU</td><td>2025-07 ${G.MAA} 철회 → 2026-07 재제출</td><td>회사 기대: 연말 ${B('clm')}</td></tr>
+  <tr><td>TILVANCE-301</td><td>1차 흑색종 + 키트루다, 3상</td><td>조기 중간분석</td></tr>
+  <tr><td>SARATOGA</td><td>육종(UPS/DDLPS), 등록 시험</td><td>ESMO 10월</td></tr>
+  <tr><td>IOV-END-201</td><td>자궁내막 장액성암</td><td>FDA 협의</td></tr>
+  <tr><td>IOV-4001/5001/3001</td><td>차세대 TIL</td><td>1/2상</td></tr></table></div>`,'s2')}
+
+ ${card('애널리스트 목표가','vs 현재가',`${dotPlot('iova',32)}<ol class="rl">
+  <li><span class="i">1</span><span class="x">H.C. Wainwright<small>$9 → $20 · Buy</small></span><span class="r">$20</span></li>
+  <li><span class="i">2</span><span class="x">Wells Fargo<small>$14 → $18 · Overweight</small></span><span class="r">$18</span></li>
+  <li><span class="i">3</span><span class="x">Barclays<small>$13 → $15 · Overweight</small></span><span class="r">$15</span></li>
+  <li><span class="i">4</span><span class="x">Goldman Sachs<small>커버리지 재개 · Buy</small></span><span class="r">$15</span></li></ol>`,'s2')}
+ ${card('지배구조 · 신호','',`<ol class="rl">
+  <li><span class="i">1</span><span class="x">임시 CEO 5년째<small>Frederick Vogt(법무총괄 겸임), 2021-05부터</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">2</span><span class="x">Amtagvi 박스 경고<small>치료 관련 사망, 장기 혈구감소, 중증 감염 등</small></span><span class="r">${B('rep')}</span></li>
+  <li><span class="i">3</span><span class="x">기관 매수<small>BlackRock·State Street 지분 확대 보도</small></span><span class="r">${B('rep')}</span></li></ol>`,'s2')}
+</div>`,()=>{lineChart($('#cI'),{h:300,area:1,aria:'IOVA 주가',series:[{name:'IOVA',cv:'--iova',vals:C.iova}],vol:{vals:VOL.iova,cv:'--iova'},events:EV.iova,refs:[{v:3.8,cv:'--violet',label:'ATM 평균 ~$3.80'},{v:TGT.iova.mean,cv:'--blue',label:'평균 목표가 $'+TGT.iova.mean.toFixed(2)}]})}]);
 
 /* VALUATION */
+function rnpv(peak,m,pos,r,ph3){let v=0,cost=0;const tax=.15,t0=2026.75;for(let y=2027;y<=2029;y++)cost+=ph3/3/Math.pow(1+r,y+.5-t0);for(let y=2030;y<=2041;y++){const ramp=Math.min(1,(y-2029)*.2);v+=peak*1000*ramp*m*(1-tax)/Math.pow(1+r,y+.5-t0)}return v*pos-cost}
+const hmColor=(v,p)=>{const r=v/p-1,a=Math.min(60,Math.abs(r)*60);return `background:color-mix(in srgb,var(${r>=0?'--up':'--down'}) ${a.toFixed(0)}%,var(--panel))`};
+function heatA(){const peaks=[1,1.5,2,3,4,5],pos=[40,50,60,70,80];let h=`<div class="hm" style="grid-template-columns:64px repeat(${pos.length},minmax(0,1fr))"><div class="h">피크 \\ 확률</div>${pos.map(p=>`<div class="h">${p}%</div>`).join('')}`;
+  peaks.forEach(pk=>{h+=`<div class="h">$${pk}B</div>`+pos.map(p=>{const v=(rnpv(pk,.4,p/100,.10,350)+AB.cash+500)/AB.fd;return `<div class="${pk===1.5&&p===60?'cur':''}" style="${hmColor(v,P.abcl)}">$${v.toFixed(1)}</div>`}).join('')});return h+'</div>'}
+function heatI(){const revs=[500,580,650,750,850],mul=[5,7,9,11,13];let h=`<div class="hm" style="grid-template-columns:64px repeat(${mul.length},minmax(0,1fr))"><div class="h">매출 \\ 배수</div>${mul.map(m=>`<div class="h">${m}x</div>`).join('')}`;
+  revs.forEach(rv=>{h+=`<div class="h">$${rv}M</div>`+mul.map(m=>{const sh=IO.sh+150/P.iova,v=(rv*m+IO.cash+150)/sh;return `<div class="${rv===580&&m===7?'cur':''}" style="${hmColor(v,P.iova)}">$${v.toFixed(1)}</div>`}).join('')});return h+'</div>'}
 V.push(['val','밸류에이션','val',()=>`
 <div class="grid g2">
  ${card(`ABCL635 ${G.RNPV} 모델`,'제 가정 '+B('est'),`
@@ -494,7 +799,7 @@ V.push(['val','밸류에이션','val',()=>`
   <div class="ctl" style="--c:var(--abcl)"><label for="a5">3상 비용 ($M)</label><input type="range" id="a5" min="150" max="700" step="25" value="350"><output id="o5"></output></div>
   <div class="ctl" style="--c:var(--abcl)"><label for="a6">기타 파이프라인 ($B)</label><input type="range" id="a6" min="0" max="4" step="0.25" value="0.5"><output id="o6"></output></div>
   <div class="out" id="aout"></div>
-  <p class="note">세율 15%. 실패 시 ABCL635 가치 0. 경영진 언급: 피크 최대 $2B, 시장 최대 $6B ${B('clm')}. 잔존가치와 인수 프리미엄을 넣지 않아 보수적인 모델입니다.</p>`)}
+  <p class="note">세율 15%. 실패 시 ABCL635 가치 0. 경영진 언급: 피크 최대 $2B, 시장 최대 $6B ${B('clm')}. 잔존가치와 인수 프리미엄을 넣지 않은 보수적 모델.</p>`)}
  ${card(`IOVA ${G.EVS} 모델`,'제 가정 '+B('est'),`
   <p class="body">2027년 매출에 배수를 곱해 기업가치를 내고, 현금과 추가 ATM 희석을 반영해 주가로 환산합니다.</p>
   <div class="btns" id="ioq"></div>
@@ -502,18 +807,19 @@ V.push(['val','밸류에이션','val',()=>`
   <div class="ctl" style="--c:var(--iova)"><label for="b2">${G.EVS} 배수</label><input type="range" id="b2" min="3" max="16" step="0.5" value="8"><output id="p2"></output></div>
   <div class="ctl" style="--c:var(--iova)"><label for="b3">추가 ATM ($M)</label><input type="range" id="b3" min="0" max="500" step="25" value="150"><output id="p3"></output></div>
   <div class="out" id="iout"></div>
-  <p class="note">추가 ATM은 현재가 발행 가정. 현금은 6/30 $303.7M + ATM 조달분. 상업화 바이오 성장주의 매출 배수는 성장률·이익 가시성에 따라 대략 4~12배 ${B('mem')}.</p>`)}
+  <p class="note">추가 ATM은 현재가 발행 가정. 상업화 바이오 성장주의 매출 배수는 성장률·이익 가시성에 따라 대략 4~12배 ${B('mem')}.</p>`)}
+ ${card('민감도 · ABCL 주당 가치','피크 매출 × 성공 확률 '+B('est'),`${heatA()}<p class="note">이익률 40%, 할인율 10%, 3상 $350M, 기타 파이프라인 $0.5B 고정. 초록 = 현재가 $${P.abcl.toFixed(2)}보다 높음, 빨강 = 낮음. 테두리 = 기본 가정.</p>`)}
+ ${card('민감도 · IOVA 주당 가치','2027 매출 × EV/매출 배수 '+B('est'),`${heatI()}<p class="note">추가 ATM $150M 가정. 초록 = 현재가 $${P.iova.toFixed(2)}보다 높음, 빨강 = 낮음. 테두리 = 매출 $580M·7배.</p>`)}
 </div>
-<div class="grid g3" style="margin-top:12px">
+<div class="grid g3 mt">
  ${card('현재가에 내재된 가정 · ABCL','역산',`<ol class="rl" id="abimp"></ol>`)}
  ${card('현재가에 내재된 가정 · IOVA','역산',`<ol class="rl" id="ioimp"></ol>`)}
  ${card('참고 거래','',`<ol class="rl">
   <li><span class="i">1</span><span class="x">Astellas ← Ogeda (fezolinetant, 2상 단계, 2017)<small>선급 약 $550M + 마일스톤 약 $300M</small></span><span class="r">${B('clm')}</span></li>
   <li><span class="i">2</span><span class="x">Gilead ← Kite (CAR-T 승인 직전, 2017-08)<small>주당 $180, 약 $11.9B</small></span><span class="r">${B('ok')}</span></li>
   <li><span class="i">3</span><span class="x">AbbVie ← IGI (삼중특이 TCE, 2025-07)<small>선급 $700M + 마일스톤 최대 약 $1.25B</small></span><span class="r">${B('clm')}</span></li>
-  <li><span class="i">4</span><span class="x">Carlyle·SK ← bluebird (2025)<small>주당 $3+CVR $6.84 또는 $5 현금</small></span><span class="r">${B('ok')}</span></li>
- </ol>`)}
-</div>`]);
+  <li><span class="i">4</span><span class="x">Carlyle·SK ← bluebird (2025)<small>주당 $3+CVR $6.84 또는 $5 현금</small></span><span class="r">${B('ok')}</span></li></ol>`)}
+</div>`,()=>{}]);
 
 /* COMPETITION */
 V.push(['comp','경쟁 구도','comp',()=>`
@@ -521,32 +827,33 @@ V.push(['comp','경쟁 구도','comp',()=>`
  ${card(`폐경 ${G.VMS} · ${G.NK3} 계열`,'',`<div class="tw"><table>
   <tr><th>약</th><th>회사</th><th>투여</th><th>상태</th><th>매출·특징</th></tr>
   <tr><td><b>Veozah</b> (fezolinetant)</td><td>Astellas</td><td>경구 매일</td><td>2023-05 승인</td><td>FY2025 ¥46.6B(+37.7%) ${B('ok')} · 간 손상 박스 경고 ${B('rep')}</td></tr>
-  <tr><td><b>Lynkuet</b> (elinzanetant)</td><td>Bayer</td><td>경구 매일, NK1+NK3</td><td>2025-10-24 FDA 승인, EU 승인</td><td>출시 1년차 ${B('rep')}</td></tr>
+  <tr><td><b>Lynkuet</b> (elinzanetant)</td><td>Bayer</td><td>경구 매일, NK1+NK3</td><td>2025-10-24 FDA 승인</td><td>출시 1년차 ${B('rep')}</td></tr>
   <tr><td><b>ABCL635</b></td><td>AbCellera</td><td>피하주사 월 1회</td><td>2상 완료</td><td>4주 단회 -83% · 간효소 상승 없음 ${B('ok')}</td></tr>
   <tr><td>후속 NK3R 항체</td><td>AbCellera</td><td>더 긴 간격 목표</td><td>IND 준비</td><td>${B('rep')}</td></tr></table></div>
-  <p class="note">회사는 효능이 경구약의 약 2배, 심각도는 4~5배라고 주장 ${B('clm')}. 경구약 허가 시험은 12주 평가라 시험 간 직접 비교는 신뢰도가 낮음.</p>`)}
- ${card('관전 포인트 · NK3 시장','',`<ol class="rl">
-  <li><span class="i">1</span><span class="x">경구약 두 개가 시장을 먼저 키우는 중<small>Veozah 연 약 $300M대, Lynkuet 출시 1년차. 항체는 2030년 진입이라 후발</small></span><span class="r">${B('est')}</span></li>
-  <li><span class="i">2</span><span class="x">주사형 수용성은 미지수<small>매일 알약 vs 월 1회 주사. 회사는 직접판매·소비자 직접 모델 검토</small></span><span class="r">${B('rep')}</span></li>
-  <li><span class="i">3</span><span class="x">간 안전성이 차별화의 핵심<small>3상 1,500명 규모에서 유지되는지</small></span><span class="r">${B('est')}</span></li>
-  <li><span class="i">4</span><span class="x">종양 환자 안면홍조는 호르몬제를 못 쓰는 환자군<small>유방암·전립선암 치료 환자로 확장 계획</small></span><span class="r">${B('rep')}</span></li>
- </ol>`)}
+  <p class="note">회사는 효능이 경구약의 약 2배라고 주장 ${B('clm')}. 경구약 허가 시험은 12주 평가라 시험 간 직접 비교는 신뢰도가 낮음.</p>`)}
+ ${card('출시 시점 비교','연도',`<div class="hb">
+   <div class="hbr" style="--c:var(--xbi)"><span class="lb">Veozah</span><span class="tr"><i style="left:${(2023.4-2023)/8*100}%;width:${(2031-2023.4)/8*100}%"></i></span><span class="vv">2023</span></div>
+   <div class="hbr" style="--c:var(--xbi)"><span class="lb">Lynkuet</span><span class="tr"><i style="left:${(2025.8-2023)/8*100}%;width:${(2031-2025.8)/8*100}%"></i></span><span class="vv">2025</span></div>
+   <div class="hbr" style="--c:var(--abcl)"><span class="lb">ABCL635 (성공 시)</span><span class="tr"><i style="left:${(2030-2023)/8*100}%;width:${(2031-2030)/8*100}%"></i></span><span class="vv">~2030</span></div>
+  </div><div class="ticks" style="display:flex;justify-content:space-between;margin-left:130px;margin-right:74px;font:11px var(--fm);color:var(--muted)"><span>2023</span><span>2027</span><span>2031</span></div>
+  <p class="note">항체가 시장에 들어올 때 경구약 2개는 이미 6~7년, 4~5년 판매 중. 후발 진입 비용이 큼.</p>`)}
  ${card('세포치료 상업화 비교','',`<div class="tw"><table>
   <tr><th>제품</th><th>기전</th><th>상업 성과</th><th>시사점</th></tr>
-  <tr><td><b>Amtagvi</b></td><td>TIL, 고형암</td><td>2Q26 약 $91M, 전 분기 +51%</td><td>고형암 세포치료 첫 성공 궤도</td></tr>
-  <tr><td>Yescarta</td><td>CAR-T, 혈액암</td><td>2024 $1.57B, 2025 감소세(3Q25 -10%)</td><td>성숙하면 성장 정체 ${B('rep')}</td></tr>
+  <tr><td><b>Amtagvi</b></td><td>TIL, 고형암</td><td>2Q26 약 $91M, 누적 약 2,000명</td><td>고형암 세포치료 첫 성공 궤도</td></tr>
+  <tr><td>Yescarta</td><td>CAR-T, 혈액암</td><td>2024 $1.57B, 2025 감소세</td><td>성숙하면 성장 정체 ${B('rep')}</td></tr>
   <tr><td>Provenge</td><td>자가 면역세포</td><td>기대 $4B, 실제 연 ~$300M, 2014 파산</td><td>제조원가가 생사 결정 ${B('ok')}</td></tr>
   <tr><td>Tecelra</td><td>TCR-T, 고형암</td><td>출시 후 $55M에 매각(2025)</td><td>규모 없으면 생존 어려움 ${B('ok')}</td></tr></table></div>`,'s2')}
-</div>`]);
+</div>`,()=>{}]);
 
 /* CALENDAR */
-V.push(['cal','촉매 캘린더','cal',()=>card('촉매 타임라인','날짜순',`<div class="flt" id="cf"></div><div class="tl" id="tl"></div>`)]);
+V.push(['cal','촉매 캘린더','cal',()=>`
+<div class="grid">
+ ${card('촉매 레인 차트','분기별 · 점선 = 시기 미확정',`<div class="lanewrap"><div class="lane" id="lane"></div></div>`)}
+ ${card('촉매 목록','날짜순',`<div class="flt" id="cf"></div><div class="tl" id="tl"></div>`)}
+</div>`,()=>{}]);
 
 /* RISKS */
-const RISK=[
- ['a','3상 실패·지연',2,3],['a','경쟁 차별화·보험 등재 실패',2,2],['a','3상 비용으로 추가 희석',2,2],['a','기대 선반영 후 되돌림',3,2],['a','파트너 매출 축소',3,1],['a','후속 자산에서 플랫폼 재현 실패',2,2],
- ['i','하반기 매출 가이던스 미달',2,3],['i','ATM 추가 희석',3,2],['i','NSCLC 데이터 실망',2,3],['i','EU 재차 불허',2,1],['i','제조·품질 사고',1,3],['i','임시 CEO 체제 지속',2,1],['i','숏커버 후 변동성',3,1]
-];
+const RISK=[['a','3상 실패·지연',2,3],['a','경쟁 차별화·보험 등재 실패',2,2],['a','3상 비용으로 추가 희석',2,2],['a','기대 선반영 후 되돌림',3,2],['a','파트너 매출 축소',3,1],['a','후속 자산에서 플랫폼 재현 실패',2,2],['i','하반기 매출 가이던스 미달',2,3],['i','ATM 추가 희석',3,2],['i','NSCLC 데이터 실망',2,3],['i','EU 재차 불허',2,1],['i','제조·품질 사고',1,3],['i','임시 CEO 체제 지속',2,1],['i','숏커버 후 변동성',3,1]];
 V.push(['risk','리스크','risk',()=>`
 <div class="grid g2">
  ${card('리스크 매트릭스','가능성 × 영향 · 제 판단 '+B('est'),`
@@ -554,147 +861,101 @@ V.push(['risk','리스크','risk',()=>`
   <div></div><div class="ax">가능성 낮음</div><div class="ax">중간</div><div class="ax">높음</div></div>`)}
  ${card('상세','',`<ol class="rl">
   <li><span class="i">A</span><span class="x">3상 실패·지연<small>4주·92명 데이터를 1,500명·장기로 확장. 3상에서 효과 크기가 줄어드는 것이 일반적</small></span><span class="r"><b class="b hi">높음</b></span></li>
-  <li><span class="i">A</span><span class="x">경쟁·보험<small>2030 진입 시 경구약 2개가 자리 잡은 상태. 주사형 가격·등재 경로 불확실</small></span><span class="r"><b class="b md">중간</b></span></li>
-  <li><span class="i">A</span><span class="x">희석<small>현금 ~$730M + 지원금 $110M. 3상과 상업화를 직접 하면 추가 조달 가능성</small></span><span class="r"><b class="b md">중간</b></span></li>
+  <li><span class="i">A</span><span class="x">경쟁·보험<small>2030 진입 시 경구약 2개가 자리 잡은 상태</small></span><span class="r"><b class="b md">중간</b></span></li>
+  <li><span class="i">A</span><span class="x">기대 선반영<small>연초 대비 ${ret('abcl',IYTD).toFixed(0)}%. 10월 첫 주 ${ret('abcl',I930).toFixed(0)}% 되돌림</small></span><span class="r"><b class="b md">중간</b></span></li>
   <li><span class="i">I</span><span class="x">가이던스<small>하반기 분기 평균 ~$122M 필요. 2Q $99M에서 가속 지속이 전제</small></span><span class="r"><b class="b hi">높음</b></span></li>
-  <li><span class="i">I</span><span class="x">ATM<small>상반기 평균 $3.80에 3,890만 주. $14대에선 같은 금액이 희석 1/4이지만 발행 유인은 큼</small></span><span class="r"><b class="b md">중간</b></span></li>
-  <li><span class="i">I</span><span class="x">NSCLC<small>ORR 25.6%는 39명 기준. 등록 코호트에서 재현돼야 2027 sBLA</small></span><span class="r"><b class="b hi">높음</b></span></li>
- </ol>`)}
-</div>`]);
+  <li><span class="i">I</span><span class="x">ATM<small>상반기 평균 $3.80에 3,890만 주. 지금 가격대에선 같은 금액의 희석이 1/3 수준이지만 발행 유인은 큼</small></span><span class="r"><b class="b md">중간</b></span></li>
+  <li><span class="i">I</span><span class="x">NSCLC<small>ORR 25.6%는 39명 기준. 등록 코호트에서 재현돼야 2027 sBLA</small></span><span class="r"><b class="b hi">높음</b></span></li></ol>`)}
+</div>`,()=>{}]);
 
 /* PRESCOTT */
-const PX=[
- ['2026-09-30','파이프라인 확률 연습','연 2개 임상 진입, 성공률 30%, 승인 약당 연 $2B 가정으로 5배·10배 매출 시나리오','2105446695362277870'],
- ['2026-09-29','JPM 커버리지 개시 $17','"ABCL635 프로필은 효능·안전성·투여 편의 면에서 차별적" 문구 인용','2104991714033508465'],
- ['2026-09-29','AI 파트너십 부재','AI를 쓰지만 프런티어 모델·칩 회사와 공개 제휴는 없다고 지적','2104995818436743519'],
- ['2026-09-10','후속 NK3R 항체','CEO: 반감기를 늘린 후속 분자 IND 준비. MIDD 진입, 유방암→전립선암 2/3상 설계','2098053400084586698'],
- ['2026-09-09','출시 2030 전후','CEO: 자체 상업화가 선호 시나리오, 파트너 여부 미정','2097757976966611080'],
- ['2026-09-03','ABCL575 기대 낮춤','OX40 계열이 아토피에서 사실상 끝났다는 평가, 파트너 가능성 크게 감소','2095535758564049264'],
- ['2026-08-18','내부자 매수','이사 Montalbano 10,000주 @ $11.03','2089788471116259520'],
- ['2026-08-14','CFO 매수','Andrew Booth 37,200주 @ $10.32','2088300289702953347'],
- ['2026-08-13','증자 해석','"$200M을 6~7% 희석에 확보, 총 유동성 약 $875M, 3년 이상 런웨이"','2087872681500676570'],
- ['2026-08-11','증자 반응','데이터 직후 파트너 대신 증자 → 자체 개발 의지로 해석','2087279814642368559'],
- ['2026-08-11','목표가 상향','BMO $7→$15, Truist $12→$30, JonesResearch $13→$25','2087167900993917435'],
- ['2026-08-10','CEO 발언','"효능은 가장 공격적인 상단 시나리오도 넘었다", "회사 미래를 단일 자산과 동일시하는 위험"','2086795989743018465'],
- ['2026-07-06','RepSeq 해설','기능 확인된 수천 개 세포를 지도로 수억 서열의 중·경쇄 짝을 복원','2073825583931502762'],
- ['2026-06-28','de novo 설계 가능성','지금 한다는 주장은 아니며, 데이터 보유량상 "한다면 ABCL"이라는 입장','2071232116482810368'],
- ['2026-05-09','핵심 아티클','플랫폼·GPCR·TCE·정부 지원·경영진 정렬. 매출 $1B × 14.75배 예시 계산','2052837514260471860'],
-];
+const PXF=[['2026-09-30','파이프라인 확률 연습','연 2개 임상 진입, 성공률 30%, 승인 약당 연 $2B 가정으로 5배·10배 매출 시나리오','2105446695362277870'],['2026-09-29','JPM 커버리지 개시 $17','"ABCL635 프로필은 효능·안전성·투여 편의 면에서 차별적" 문구 인용','2104991714033508465'],['2026-09-29','AI 파트너십 부재','AI를 쓰지만 프런티어 모델·칩 회사와 공개 제휴는 없다고 지적','2104995818436743519'],['2026-09-10','후속 NK3R 항체','CEO: 반감기를 늘린 후속 분자 IND 준비. MIDD 진입, 유방암→전립선암 2/3상 설계','2098053400084586698'],['2026-09-09','출시 2030 전후','CEO: 자체 상업화가 선호 시나리오, 파트너 여부 미정','2097757976966611080'],['2026-09-03','ABCL575 기대 낮춤','OX40 계열이 아토피에서 사실상 끝났다는 평가','2095535758564049264'],['2026-08-18','내부자 매수','이사 Montalbano 10,000주 @ $11.03','2089788471116259520'],['2026-08-14','CFO 매수','Andrew Booth 37,200주 @ $10.32','2088300289702953347'],['2026-08-13','증자 해석','"$200M을 6~7% 희석에 확보, 총 유동성 약 $875M"','2087872681500676570'],['2026-08-11','증자 반응','데이터 직후 파트너 대신 증자 → 자체 개발 의지로 해석','2087279814642368559'],['2026-08-11','목표가 상향','BMO $7→$15, Truist $12→$30, JonesResearch $13→$25','2087167900993917435'],['2026-08-10','CEO 발언','"효능은 가장 공격적인 상단 시나리오도 넘었다"','2086795989743018465'],['2026-07-06','RepSeq 해설','기능 확인된 수천 개 세포를 지도로 수억 서열의 중·경쇄 짝을 복원','2073825583931502762'],['2026-06-28','de novo 설계 가능성','지금 한다는 주장은 아니며 "한다면 ABCL"이라는 입장','2071232116482810368'],['2026-05-09','핵심 아티클','플랫폼·GPCR·TCE·정부 지원·경영진 정렬. 매출 $1B × 14.75배 예시 계산','2052837514260471860']];
 V.push(['px','Prescott 논점','x',()=>`
 <div class="grid g3">
- ${card('누구의 시각인가','본인 공개 '+B('clm'),`<p class="body">X 계정 @JackPrescottX. ABCL 롱, 포트폴리오의 약 20%, 평단 약 $3.93, 생물학 비전공이라고 본인이 밝힘. 5/9 아티클 조회 33만으로 가장 영향력 있는 개인 롱 논객이라 심리 지표로도 의미가 있습니다.</p>
+ ${card('누구의 시각인가','본인 공개 '+B('clm'),`<p class="body">X 계정 @JackPrescottX. ABCL 롱, 포트폴리오의 약 20%, 평단 약 $3.93, 생물학 비전공이라고 본인이 밝힘. 현재가 $${P.abcl.toFixed(2)} 기준 평단 대비 약 ${(P.abcl/3.93).toFixed(1)}배.</p>
   <p class="note">수집 범위: 2026-08-07~09-30 전체 38건(Chrome 로그인 세션), 그 이전은 상위 게시물과 개별 글 10건.</p>`)}
  ${card('논점이 맞았던 것','결과 대조',`<ol class="rl">
   <li><span class="i">1</span><span class="x">ABCL635 2상 성공<small>예고한 시기(3Q) 그대로 8/10 발표</small></span><span class="r">${B('ok')}</span></li>
   <li><span class="i">2</span><span class="x">TCE 딜<small>Jazz $84M, Vertex $28M 선급</small></span><span class="r">${B('ok')}</span></li>
-  <li><span class="i">3</span><span class="x">재평가<small>5월 시총 $1.57B → 약 3배</small></span><span class="r">${B('ok')}</span></li>
- </ol>`)}
+  <li><span class="i">3</span><span class="x">재평가<small>5/9 글 시점 시총 $1.57B → 현재 ${fmtB(AB.cap)}</small></span><span class="r">${B('ok')}</span></li></ol>`)}
  ${card('논점에서 빠진 것','제 판단',`<ol class="rl">
-  <li><span class="i">1</span><span class="x">경쟁 시장의 시간차<small>경구약 2개가 2030년 전까지 시장을 선점</small></span><span class="r">${B('est')}</span></li>
+  <li><span class="i">1</span><span class="x">경쟁 시장의 시간차<small>경구약 2개가 2030년 전까지 시장 선점</small></span><span class="r">${B('est')}</span></li>
   <li><span class="i">2</span><span class="x">'100개+ 파트너 프로그램'의 실체<small>활성 35개, 로열티 매출 분기 $0.1M</small></span><span class="r">${B('ok')}</span></li>
-  <li><span class="i">3</span><span class="x">완전희석 주식 수<small>옵션 6,630만 개. 그의 계산은 기본 주식 수 기준</small></span><span class="r">${B('est')}</span></li>
- </ol>`)}
- ${card('게시물 피드','최신순',`<div class="tl">${PX.map(p=>`<div class="tli" style="--c:var(--abcl)"><span class="dt">${p[0]}</span><span class="pin"></span><span><b>${p[1]}</b><small>${p[2]}</small></span><span><a href="https://x.com/JackPrescottX/status/${p[3]}" target="_blank" rel="noopener">원문</a></span></div>`).join('')}</div>`,'s3')}
-</div>`]);
+  <li><span class="i">3</span><span class="x">완전희석 주식 수<small>옵션 6,630만 개. 그의 계산은 기본 주식 수 기준</small></span><span class="r">${B('est')}</span></li></ol>`)}
+ ${card('게시물 피드','최신순',`<div class="tl">${PXF.map(p=>`<div class="tli" style="--c:var(--abcl)"><span class="dt">${p[0]}</span><span class="pin"></span><span><b>${p[1]}</b><small>${p[2]}</small></span><span><a href="https://x.com/JackPrescottX/status/${p[3]}" target="_blank" rel="noopener">원문</a></span></div>`).join('')}</div>`,'s3')}
+</div>`,()=>{}]);
 
 /* ANALOGS */
-const AN=[
- ['i','Dendreon · Provenge','2010–14','자가 면역세포. 기대 연 $4B → 실제 ~$300M, 원가율 77%→53%, 2014-11 파산보호','IOVA는 원가율 약 44%(2Q)로 출발점이 다름. 제조가 성장 상한이라는 구조는 같음','ok'],
- ['i','Gilead ← Kite','2017','CAR-T 승인 직전 주당 $180, 약 $11.9B 인수. Yescarta는 2024 $1.57B 후 정체','세포치료도 전략 인수 대상. IOVA 현 EV 약 $6.4B','ok'],
- ['i','bluebird bio','2025','유전자치료 3개 승인에도 주당 $3+CVR 또는 $5 현금에 매각','승인 ≠ 가치. 매출 성장과 현금 소진의 교차점이 핵심','ok'],
- ['i','Adaptimmune · Tecelra','2025','첫 고형암 TCR-T 승인 후 $55M(+최대 $30M)에 매각','고형암 세포치료는 규모가 생존 조건','ok'],
- ['a','Astellas · Veozah','2017–24','2상 단계 인수 후 2023 승인, 간 손상 박스 경고 추가, FY2025 ¥46.6B','ABCL635 차별화(간 안전성)의 근거이자 2상 후 파트너링 가격 선례','rep'],
- ['a','Vir Biotechnology','2021–24','COVID 항체 윈드폴 후 파이프라인 전환, 주가 장기 하락','ABCL도 COVID 항체 윈드폴 이력. 차이는 이미 강한 2상 자산 보유','mem'],
- ['a','Genmab · Regeneron','2000s–10s','항체 플랫폼에서 자체 블록버스터로 전환 성공','수년의 로열티 기반이 있었음. ABCL은 로열티 기반이 거의 없음','mem']
-];
-V.push(['hist','과거 사례','hist',()=>`<div class="grid g2">${AN.map(a=>card(`<span class="tag" style="--c:var(--${a[0]==='a'?'abcl':'iova'})">${a[1]}</span>`,a[2]+' '+B(a[5]),`<p class="body">${a[3]}</p><div class="quote" style="--c:var(--${a[0]==='a'?'abcl':'iova'})">${a[4]}</div>`)).join('')}</div>`]);
+const AN=[['i','Dendreon · Provenge','2010–14','자가 면역세포. 기대 연 $4B → 실제 ~$300M, 원가율 77%→53%, 2014-11 파산보호','IOVA는 원가율 약 44%(2Q)로 출발점이 다름. 제조가 성장 상한이라는 구조는 같음','ok'],['i','Gilead ← Kite','2017','CAR-T 승인 직전 주당 $180, 약 $11.9B 인수. Yescarta는 2024 $1.57B 후 정체','세포치료도 전략 인수 대상. IOVA 현 EV 약 '+fmtB(IO.ev),'ok'],['i','bluebird bio','2025','유전자치료 3개 승인에도 주당 $3+CVR 또는 $5 현금에 매각','승인 ≠ 가치. 매출 성장과 현금 소진의 교차점이 핵심','ok'],['i','Adaptimmune · Tecelra','2025','첫 고형암 TCR-T 승인 후 $55M(+최대 $30M)에 매각','고형암 세포치료는 규모가 생존 조건','ok'],['a','Astellas · Veozah','2017–24','2상 단계 인수 후 2023 승인, 간 손상 박스 경고 추가, FY2025 ¥46.6B','ABCL635 차별화(간 안전성)의 근거이자 파트너링 가격 선례','rep'],['a','Vir Biotechnology','2021–24','COVID 항체 윈드폴 후 파이프라인 전환, 주가 장기 하락','ABCL도 COVID 항체 윈드폴 이력. 차이는 이미 강한 2상 자산 보유','mem'],['a','Genmab · Regeneron','2000s–10s','항체 플랫폼에서 자체 블록버스터로 전환 성공','수년의 로열티 기반이 있었음. ABCL은 로열티 기반이 거의 없음','mem']];
+V.push(['hist','과거 사례','hist',()=>`<div class="grid g2">${AN.map(a=>card(`<span class="tag" style="--c:var(--${a[0]==='a'?'abcl':'iova'})">${a[1]}</span>`,a[2]+' '+B(a[5]),`<p class="body">${a[3]}</p><div class="quote" style="--c:var(--${a[0]==='a'?'abcl':'iova'})">${a[4]}</div>`)).join('')}</div>`,()=>{}]);
 
 /* SOURCES */
-const SRC=[
- ['ABCL 10-Q 2Q26','https://www.sec.gov/Archives/edgar/data/0001703057/000170305726000046/abcl-20260630.htm'],
- ['ABCL 2Q26 실적 (SEC)','https://www.sec.gov/Archives/edgar/data/1703057/000170305726000044/q22026earningspressrelease.htm'],
- ['ABCL635 2상 (IR)','https://investors.abcellera.com/news/news-releases/2026/AbCellera-Announces-Positive-Top-Line-Phase-2-Clinical-Trial-Results-for-ABCL635-Demonstrating-Significant-Reduction-in-Frequency-and-Severity-of-Vasomotor-Symptoms-and-a-Favorable-Tolerability-Profile/default.aspx'],
- ['ABCL 1Q26 · 1상 (IR)','https://investors.abcellera.com/news/news-releases/2026/AbCellera-Reports-Q1-2026-Business-Results--Announces-Positive-Interim-Phase-1-Clinical-Data-for-ABCL635/default.aspx'],
- ['ABCL $200M 증자 (IR)','https://investors.abcellera.com/news/news-releases/2026/AbCellera-Announces-Pricing-of-Oversubscribed-200-Million-Public-Offering-of-Common-Shares-and-Pre-Funded-Warrants/default.aspx'],
- ['ABCL Cantor 트랜스크립트','https://www.investing.com/news/transcripts/abcellera-at-cantor-healthcare-conference-nk3r-drug-boosts-hopes-93CH-4894897'],
- ['ABCL JPM 개시','https://www.investing.com/news/analyst-ratings/jpmorgan-initiates-abcellera-stock-coverage-with-overweight-rating-93CH-4923064'],
- ['ABCL–Bruker 합의 (IR)','https://investors.abcellera.com/news/news-releases/2025/AbCellera-and-Bruker-Reach-Global-Settlement-of-Patent-Litigation/default.aspx'],
- ['ABCL 통계 (StockAnalysis)','https://stockanalysis.com/stocks/abcl/statistics/'],
- ['IOVA 10-Q 2Q26','https://www.sec.gov/Archives/edgar/data/0001425205/000110465926091716/iova-20260630x10q.htm'],
- ['IOVA 2Q26 실적','https://www.globenewswire.com/news-release/2026/08/06/3340124/0/en/iovance-biotherapeutics-reports-record-second-quarter-2026-revenue-of-99m-business-achievements-and-corporate-updates.html'],
- ['IOVA 가이던스 상향','https://www.globenewswire.com/news-release/2026/09/29/3370675/0/en/iovance-biotherapeutics-raises-full-year-2026-revenue-guidance-to-410-to-420-million.html'],
- ['IOVA NSCLC 데이터','https://www.globenewswire.com/news-release/2025/11/03/3179067/0/en/Iovance-Biotherapeutics-Reports-Potential-Best-in-Class-Clinical-Data-for-Lifileucel-TIL-Cell-Therapy-in-Advanced-Non-Small-Cell-Lung-Cancer-NSCLC.html'],
- ['Amtagvi EU 철회 (EMA)','https://www.ema.europa.eu/en/documents/medicine-qa/questions-answers-withdrawal-application-marketing-authorisation-amtagvi-lifileucel_en.pdf'],
- ['IOVA 통계 (StockAnalysis)','https://stockanalysis.com/stocks/iova/statistics/'],
- ['Astellas FY2025 실적','https://www.astellas.com/content/dam/astellas-com/global/en/confidential-documents/financial-results/4q2025_en.pdf'],
- ['Gilead–Kite (SEC)','https://www.sec.gov/Archives/edgar/data/0001510580/000119312517269386/d441582dex991.htm'],
- ['Prescott 아티클 (X)','https://x.com/JackPrescottX/status/2052837514260471860']
-];
+const SRC=[['ABCL 10-Q 2Q26','https://www.sec.gov/Archives/edgar/data/0001703057/000170305726000046/abcl-20260630.htm'],['ABCL 2Q26 실적 (SEC)','https://www.sec.gov/Archives/edgar/data/1703057/000170305726000044/q22026earningspressrelease.htm'],['ABCL635 2상 (IR)','https://investors.abcellera.com/news/news-releases/2026/AbCellera-Announces-Positive-Top-Line-Phase-2-Clinical-Trial-Results-for-ABCL635-Demonstrating-Significant-Reduction-in-Frequency-and-Severity-of-Vasomotor-Symptoms-and-a-Favorable-Tolerability-Profile/default.aspx'],['ABCL IMS 학회 발표 (IR)','https://investors.abcellera.com/news/news-releases/2026/AbCellera-Announces-Presentation-of-Phase-2-Data-for-ABCL635-at-the-IMS-World-Congress-on-Menopause-2026/default.aspx'],['ABCL 3Q 실적일 11/9','https://finance.yahoo.com/healthcare/articles/abcellera-report-third-quarter-2026-200500788.html'],['ABCL $200M 증자 (IR)','https://investors.abcellera.com/news/news-releases/2026/AbCellera-Announces-Pricing-of-Oversubscribed-200-Million-Public-Offering-of-Common-Shares-and-Pre-Funded-Warrants/default.aspx'],['ABCL Cantor 트랜스크립트','https://www.investing.com/news/transcripts/abcellera-at-cantor-healthcare-conference-nk3r-drug-boosts-hopes-93CH-4894897'],['ABCL JPM 개시','https://www.investing.com/news/analyst-ratings/jpmorgan-initiates-abcellera-stock-coverage-with-overweight-rating-93CH-4923064'],['IOVA 10-Q 2Q26','https://www.sec.gov/Archives/edgar/data/0001425205/000110465926091716/iova-20260630x10q.htm'],['IOVA 가이던스 상향','https://www.globenewswire.com/news-release/2026/09/29/3370675/0/en/iovance-biotherapeutics-raises-full-year-2026-revenue-guidance-to-410-to-420-million.html'],['IOVA 10/5 가이던스 재확인','https://www.tradingview.com/news/tradingview:a7a533f7ca63a:0-iovance-biotherapeutics-updates-corporate-presentation-affirms-410m-420m-2026-revenue-guidance/'],['IOVA 공매도 (Ortex 10/7)','https://ortex.news/articles/182661/iova-short-covering-continues-but-the-unwind-looks-measured'],['IOVA 10/6 하락 (MarketBeat)','https://www.marketbeat.com/instant-alerts/price-iovance-biotherapeutics-nasdaq-iova-stock-price-down-62-heres-why-2026-10-06/'],['IOVA NSCLC 데이터','https://www.globenewswire.com/news-release/2025/11/03/3179067/0/en/Iovance-Biotherapeutics-Reports-Potential-Best-in-Class-Clinical-Data-for-Lifileucel-TIL-Cell-Therapy-in-Advanced-Non-Small-Cell-Lung-Cancer-NSCLC.html'],['Amtagvi EU 철회 (EMA)','https://www.ema.europa.eu/en/documents/medicine-qa/questions-answers-withdrawal-application-marketing-authorisation-amtagvi-lifileucel_en.pdf'],['바이오 주간 동향 (Stocktwits)','https://stocktwits.com/news-articles/markets/equity/biotech-midweek-pulse-xbi-loses-steam-hot-2026-stocks-catalysts-watch/cZtYGZfRB2R'],['주가 데이터 (Yahoo Finance)','https://finance.yahoo.com/quote/ABCL/history/'],['Astellas FY2025 실적','https://www.astellas.com/content/dam/astellas-com/global/en/confidential-documents/financial-results/4q2025_en.pdf'],['Gilead–Kite (SEC)','https://www.sec.gov/Archives/edgar/data/0001510580/000119312517269386/d441582dex991.htm'],['Prescott 아티클 (X)','https://x.com/JackPrescottX/status/2052837514260471860']];
 V.push(['src','출처 · 방법','src',()=>`<div class="grid g2">
  ${card('출처','1차 자료 우선',`<ol class="rl">${SRC.map((s,i)=>`<li><span class="i">${i+1}</span><span class="x"><a href="${s[1]}" target="_blank" rel="noopener">${s[0]}</a></span><span class="r"></span></li>`).join('')}</ol>`)}
  ${card('계산 방법','재현 가능',`<ol class="rl">
-  <li><span class="i">1</span><span class="x">ABCL 기본 주식 수<small>306.47M(6/30) + 17.44M(증자) + 3.08M(사전납입 워런트) = ${AB.basic.toFixed(1)}M</small></span><span class="r"></span></li>
-  <li><span class="i">2</span><span class="x">ABCL 완전희석<small>옵션 21.2M@$1.18 + 45.1M@$6.53 + RSU 9.8M, 행사대금으로 현재가에 자사주 매입 가정 → +${AB.tsm.toFixed(1)}M</small></span><span class="r"></span></li>
-  <li><span class="i">3</span><span class="x">ABCL 9/30 현금<small>$565.1M + 증자 순수입 ~$187M + Vertex $28M − 3Q 소진 ~$50M ≈ ${fmtB(AB.cash)}</small></span><span class="r"></span></li>
-  <li><span class="i">4</span><span class="x">ABCL 런웨이<small>(현금+지원금) ÷ 연 소진. 3상 없이 $200M/년 → 4.2년, 3상 포함 ~$315M/년 → 2.7년</small></span><span class="r"></span></li>
-  <li><span class="i">5</span><span class="x">IOVA EV<small>452.97M × $14.82 − $303.7M(6/30). 3분기 소진·ATM 미반영</small></span><span class="r"></span></li>
-  <li><span class="i">6</span><span class="x">IOVA 하반기 필요 매출<small>$415M − 상반기 $170.7M = $244.3M → 분기 평균 $122M</small></span><span class="r"></span></li>
-  <li><span class="i">7</span><span class="x">한계<small>9/30 이후 공시 미반영. 3분기 실제 현금은 11월 실적에서 확인 필요</small></span><span class="r"></span></li>
- </ol>`)}
-</div>`]);
+  <li><span class="i">1</span><span class="x">가격<small>${lastDate} 종가, 일별 데이터 ${N}거래일</small></span><span class="r"></span></li>
+  <li><span class="i">2</span><span class="x">ABCL 기본 주식 수<small>306.47M + 17.44M(증자) + 3.08M(사전납입 워런트) = ${AB.basic.toFixed(1)}M</small></span><span class="r"></span></li>
+  <li><span class="i">3</span><span class="x">ABCL 완전희석<small>옵션·RSU를 현재가 기준 자사주 매입법으로 → +${AB.tsm.toFixed(1)}M</small></span><span class="r"></span></li>
+  <li><span class="i">4</span><span class="x">ABCL 9/30 현금<small>$565.1M + 증자 순수입 ~$187M + Vertex $28M − 3Q 소진 ~$50M ≈ ${fmtB(AB.cash)}</small></span><span class="r"></span></li>
+  <li><span class="i">5</span><span class="x">ABCL 런웨이<small>3상 없이 $200M/년 → 4.2년, 3상 포함 ~$315M/년 → 2.7년</small></span><span class="r"></span></li>
+  <li><span class="i">6</span><span class="x">IOVA EV<small>452.97M × 현재가 − $303.7M(6/30)</small></span><span class="r"></span></li>
+  <li><span class="i">7</span><span class="x">한계<small>3분기 실제 현금·주식 수는 11/6, 11/9 실적에서 확인 필요</small></span><span class="r"></span></li></ol>`)}
+</div>`,()=>{}]);
 
 /* ---------- render ---------- */
-const nav=$('#nav'), views=$('#views');
-V.forEach(([id,label,ic,fn])=>{
+const nav=$('#nav'),views=$('#views');
+V.forEach(([id,label,ic,fn,draw])=>{
   const b=document.createElement('button');b.innerHTML=`<svg viewBox="0 0 24 24">${ICON[ic]}</svg>${label}`;b.dataset.id=id;b.onclick=()=>show(id);nav.appendChild(b);
-  const s=document.createElement('section');s.id='v-'+id;s.hidden=true;s.innerHTML=fn();views.appendChild(s);
+  const s=document.createElement('section');s.id='v-'+id;s.hidden=true;s.innerHTML=fn();views.appendChild(s);CH[id]=draw;
 });
-function show(id){
-  V.forEach(([v])=>{$('#v-'+v).hidden=v!==id});
+let CUR='overview';
+function draw(){CH[CUR]&&CH[CUR]();document.querySelectorAll('[data-rng] button').forEach(b=>b.setAttribute('aria-pressed',b.dataset.r===RANGE))}
+function show(id){CUR=id;V.forEach(([v])=>{$('#v-'+v).hidden=v!==id});
   [...nav.children].forEach(b=>{if(b.dataset.id===id)b.setAttribute('aria-current','page');else b.removeAttribute('aria-current')});
   try{localStorage.setItem('abiova-view',id)}catch(e){}
-  window.scrollTo(0,0);
-}
+  window.scrollTo(0,0);requestAnimationFrame(draw)}
+document.addEventListener('click',e=>{const g=e.target.closest('[data-go]');if(g){e.preventDefault();show(g.dataset.go);return}const b=e.target.closest('[data-rng] button');if(b){RANGE=b.dataset.r;try{localStorage.setItem('abiova-rng',RANGE)}catch(x){}draw()}});
+let rt;window.addEventListener('resize',()=>{clearTimeout(rt);rt=setTimeout(draw,150)});
+if(window.matchMedia)matchMedia('(prefers-color-scheme: dark)').addEventListener?.('change',draw);
 
+/* header / watchlist */
+$('#asof').textContent=`${lastDate} 종가 · 2Q26 10-Q · 2026-10-08 갱신`;
+$('#wlDate').textContent=lastDate.slice(5).replace('-','/')+' 종가';
+[['A','abcl'],['I','iova'],['X','xbi']].forEach(([s,k])=>{$('#wl'+s).textContent='$'+P[k].toFixed(2);const r=ret(k,I930);$('#wl'+s+'d').innerHTML=`<span class="${r>=0?'up':'down'}" style="font:500 11px var(--fm)">${r>=0?'+':''}${r.toFixed(1)}%</span>`});
+
+/* calendar */
 let cf='all';
-function renderCal(){
-  $('#cf').innerHTML=[['all','전체'],['a','ABCL'],['i','IOVA']].map(f=>`<button aria-pressed="${cf===f[0]}" data-f="${f[0]}">${f[1]}</button>`).join('');
+function renderCal(){$('#cf').innerHTML=[['all','전체'],['a','ABCL'],['i','IOVA']].map(f=>`<button aria-pressed="${cf===f[0]}" data-f="${f[0]}">${f[1]}</button>`).join('');
   [...$('#cf').children].forEach(b=>b.onclick=()=>{cf=b.dataset.f;renderCal()});
-  $('#tl').innerHTML=CAL.filter(c=>cf==='all'||c.tk===cf).map(tlRow).join('');
-}
+  $('#tl').innerHTML=CAL.filter(c=>cf==='all'||c.tk===cf).map(tlRow).join('')}
 renderCal();
+(function(){const cols=['4Q26','1Q27','2Q27','3Q27','4Q27','2028+'];let h=`<div></div>${cols.map(c=>`<div class="hd">${c}</div>`).join('')}`;
+  [['a','ABCL','--abcl'],['i','IOVA','--iova']].forEach(([k,n,cv])=>{
+    const evs=CAL.filter(c=>c.tk===k);
+    const rows=[];evs.forEach(e=>{const [s,t]=Array.isArray(e.col)?e.col:[e.col,e.col];let r=rows.findIndex(row=>row.every(x=>t<x[0]||s>x[1]));if(r<0){rows.push([]);r=rows.length-1}rows[r].push([s,t,e])});
+    rows.forEach((row,ri)=>{h+=`<div class="lb" style="--c:var(${cv})">${ri===0?n:''}</div>`;let c=1;row.sort((a,b)=>a[0]-b[0]).forEach(([s,t,e])=>{if(s>c)h+=`<div class="cellx" style="grid-column:span ${s-c}"></div>`;h+=`<div class="cellx" style="grid-column:span ${t-s+1};--c:var(${cv})"><div class="ev ${e.u?'u':''}" style="--c:var(${cv})">${e.t}<br><small style="color:var(--muted)">${e.d}</small></div></div>`;c=t+1});if(c<=6)h+=`<div class="cellx" style="grid-column:span ${7-c}"></div>`});
+  });
+  $('#lane').innerHTML=h})();
 
-function rnpv(peak,m,pos,r,ph3){
-  let v=0,cost=0;const tax=.15,t0=2026.75;
-  for(let y=2027;y<=2029;y++)cost+=ph3/3/Math.pow(1+r,y+.5-t0);
-  for(let y=2030;y<=2041;y++){const ramp=Math.min(1,(y-2029)*.2);v+=peak*1000*ramp*m*(1-tax)/Math.pow(1+r,y+.5-t0)}
-  return v*pos-cost;
-}
-function calcA(){
-  const peak=+$('#a1').value,m=+$('#a2').value/100,pos=+$('#a3').value/100,r=+$('#a4').value/100,ph3=+$('#a5').value,oth=+$('#a6').value*1000;
+/* valuation calculators */
+function calcA(){const peak=+$('#a1').value,m=+$('#a2').value/100,pos=+$('#a3').value/100,r=+$('#a4').value/100,ph3=+$('#a5').value,oth=+$('#a6').value*1000;
   $('#o1').textContent='$'+peak.toFixed(1)+'B';$('#o2').textContent=Math.round(m*100)+'%';$('#o3').textContent=Math.round(pos*100)+'%';$('#o4').textContent=Math.round(r*100)+'%';$('#o5').textContent='$'+ph3+'M';$('#o6').textContent='$'+(oth/1000).toFixed(2)+'B';
   const x=rnpv(peak,m,pos,r,ph3),ps=(x+AB.cash+oth)/AB.fd;
-  $('#aout').innerHTML=`<div><small>ABCL635 rNPV</small><b>${fmtB(x)}</b></div><div><small>+ 현금 + 기타</small><b>${fmtB(AB.cash+oth)}</b></div><div><small>주당 가치(완전희석)</small><b>$${ps.toFixed(2)}</b></div><div><small>현재가 대비</small><b class="${ps>=P.abcl?'up':'down'}">${ps>=P.abcl?'+':''}${((ps/P.abcl-1)*100).toFixed(0)}%</b></div>`;
-}
+  $('#aout').innerHTML=`<div><small>ABCL635 rNPV</small><b>${fmtB(x)}</b></div><div><small>+ 현금 + 기타</small><b>${fmtB(AB.cash+oth)}</b></div><div><small>주당 가치(완전희석)</small><b>$${ps.toFixed(2)}</b></div><div><small>현재가 대비</small><b class="${ps>=P.abcl?'up':'down'}">${ps>=P.abcl?'+':''}${pct(ps,P.abcl).toFixed(0)}%</b></div>`}
 ['a1','a2','a3','a4','a5','a6'].forEach(i=>$('#'+i).oninput=calcA);
 const AQ={'보수':[1,30,45,12,450,0.25],'기본':[1.5,40,60,10,350,0.5],'회사 상단':[2,45,70,9,350,1],'현재가 수준':[3,45,70,9,350,2]};
 $('#abq').innerHTML=Object.keys(AQ).map(k=>`<button data-k="${k}">${k}</button>`).join('');
 [...$('#abq').children].forEach(b=>b.onclick=()=>{AQ[b.dataset.k].forEach((v,i)=>$('#a'+(i+1)).value=v);calcA()});
 calcA();
-(function(){
-  const mkt=P.abcl*AB.fd, base=rnpv(1.5,.4,.6,.10,350), implied=mkt-AB.cash-base;
-  let pk=0.5;while(pk<10&&rnpv(pk,.4,.6,.10,350)<mkt-AB.cash)pk+=0.05;
+(function(){const mkt=P.abcl*AB.fd,base=rnpv(1.5,.4,.6,.10,350),implied=mkt-AB.cash-base;let pk=0.5;while(pk<10&&rnpv(pk,.4,.6,.10,350)<mkt-AB.cash)pk+=0.05;
   $('#abimp').innerHTML=`<li><span class="i">1</span><span class="x">기본 가정의 ABCL635 가치<small>피크 $1.5B · 이익률 40% · 성공 60% · 할인 10%</small></span><span class="r">${fmtB(base)}</span></li>
   <li><span class="i">2</span><span class="x">시장이 나머지에 매기는 값<small>완전희석 시총 − 현금 − ABCL635. 후속 파이프라인·플랫폼·인수 기대</small></span><span class="r">${fmtB(implied)}</span></li>
-  <li><span class="i">3</span><span class="x">ABCL635 하나로 현재가를 설명하려면 필요한 피크 매출<small>같은 조건, 기타 가치 0</small></span><span class="r">${pk>=10?'$10B+':'$'+pk.toFixed(1)+'B'}</span></li>`;
-})();
-
-function calcI(){
-  const rev=+$('#b1').value,mul=+$('#b2').value,atm=+$('#b3').value;
+  <li><span class="i">3</span><span class="x">ABCL635 하나로 현재가를 설명하려면 필요한 피크 매출<small>같은 조건, 기타 가치 0</small></span><span class="r">${pk>=10?'$10B+':'$'+pk.toFixed(1)+'B'}</span></li>`})();
+function calcI(){const rev=+$('#b1').value,mul=+$('#b2').value,atm=+$('#b3').value;
   $('#p1').textContent='$'+rev+'M';$('#p2').textContent=mul.toFixed(1)+'x';$('#p3').textContent='$'+atm+'M';
   const sh=IO.sh+atm/P.iova,ps=(rev*mul+IO.cash+atm)/sh;
-  $('#iout').innerHTML=`<div><small>기업가치</small><b>${fmtB(rev*mul)}</b></div><div><small>주식 수</small><b>${sh.toFixed(0)}M</b></div><div><small>주당 가치</small><b>$${ps.toFixed(2)}</b></div><div><small>현재가 대비</small><b class="${ps>=P.iova?'up':'down'}">${ps>=P.iova?'+':''}${((ps/P.iova-1)*100).toFixed(0)}%</b></div>`;
-}
+  $('#iout').innerHTML=`<div><small>기업가치</small><b>${fmtB(rev*mul)}</b></div><div><small>주식 수</small><b>${sh.toFixed(0)}M</b></div><div><small>주당 가치</small><b>$${ps.toFixed(2)}</b></div><div><small>현재가 대비</small><b class="${ps>=P.iova?'up':'down'}">${ps>=P.iova?'+':''}${pct(ps,P.iova).toFixed(0)}%</b></div>`}
 ['b1','b2','b3'].forEach(i=>$('#'+i).oninput=calcI);
 const IQ={'보수':[520,5,250],'기본':[580,8,150],'낙관':[700,11,50]};
 $('#ioq').innerHTML=Object.keys(IQ).map(k=>`<button data-k="${k}">${k}</button>`).join('');
@@ -702,8 +963,9 @@ $('#ioq').innerHTML=Object.keys(IQ).map(k=>`<button data-k="${k}">${k}</button>`
 calcI();
 $('#ioimp').innerHTML=`<li><span class="i">1</span><span class="x">2026 가이던스 기준 EV/매출<small>중간값 $415M</small></span><span class="r">${(IO.ev/415).toFixed(1)}x</span></li>
   <li><span class="i">2</span><span class="x">8배를 정당화하려면 필요한 매출<small>성장이 둔화되면 통상 받는 배수</small></span><span class="r">${fmtB(IO.ev/8)}</span></li>
-  <li><span class="i">3</span><span class="x">2Q 연환산 대비 필요한 성장<small>$397M 기준</small></span><span class="r">+${((IO.ev/8/397.2-1)*100).toFixed(0)}%</span></li>`;
+  <li><span class="i">3</span><span class="x">2Q 연환산 대비 필요한 성장<small>$397M 기준</small></span><span class="r">+${pct(IO.ev/8,397.2).toFixed(0)}%</span></li>`;
 
+try{const r=localStorage.getItem('abiova-rng');if(r&&RANGES.some(x=>x[0]===r))RANGE=r}catch(e){}
 let start='overview';try{const s=localStorage.getItem('abiova-view');if(s&&$('#v-'+s))start=s}catch(e){}
 show(start);
 })();
